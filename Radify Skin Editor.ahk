@@ -21,7 +21,7 @@ if (!pToken := Gdip_Startup())
  * @version 1.0.0
  * @license MIT
  * @date 2025-08-05
- * @see {@link https://github.com GitHub}
+ * @see {@link https://github.com/XMCQCX/RadifyClass-RadifySkinEditor GitHub}
  * @see {@link https://www.autohotkey.com AHK Forum}
  ********************************************************************************************/
 class RadifySkinEditor {
@@ -29,7 +29,7 @@ class RadifySkinEditor {
     {
         this.scriptName := 'Radify Skin Editor'
         this.scriptVersion := 'v1.0.0'
-        this.linkGitHubRepo := 'https://github.com'
+        this.linkGitHubRepo := 'https://github.com/XMCQCX/RadifyClass-RadifySkinEditor'
         this.gMainTitle := this.scriptName ' - ' this.scriptVersion
         this.debounceTimers := {}
 
@@ -2383,4 +2383,5 @@ class RadifySkinEditor {
             return true
         }
     }
+
 }
