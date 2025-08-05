@@ -8,7 +8,7 @@
  * @file Radify Menus.ahk
  * @version 1.0.0
  * @date 2025-08-05
- * @see {@link https://github.com GitHub}
+ * @see {@link https://github.com/XMCQCX/RadifyClass-RadifySkinEditor GitHub}
  * @see {@link https://www.autohotkey.com AHK Forum}
  ********************************************************************************************/
 
@@ -775,5 +775,6 @@ ToggleSuspend() {
     TraySetIcon(A_IsSuspended ? hiconsObj.radify0 : hiconsObj.radify1)
     A_TrayMenu.%(A_IsSuspended ? 'Check' : 'Uncheck')%('Suspend Hotkeys')
 }
+
 
 ;==============================================
