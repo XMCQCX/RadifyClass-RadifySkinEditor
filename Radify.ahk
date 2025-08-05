@@ -4,7 +4,7 @@
  * @version 1.0.0
  * @license MIT
  * @date 2025-08-05
- * @see {@link https://github.com GitHub}
+ * @see {@link https://github.com/XMCQCX/RadifyClass-RadifySkinEditor GitHub}
  * @see {@link https://www.autohotkey.com AHK Forum}
  ********************************************************************************************/
 class Radify {
@@ -1893,4 +1893,5 @@ class JSON_thqby_Radify {
 			return s
 		}
 	}
+
 }
