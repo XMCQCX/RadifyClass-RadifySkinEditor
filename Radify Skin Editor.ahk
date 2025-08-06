@@ -22,7 +22,7 @@ if (!pToken := Gdip_Startup())
  * @license MIT
  * @date 2025-08-05
  * @see {@link https://github.com/XMCQCX/RadifyClass-RadifySkinEditor GitHub}
- * @see {@link https://www.autohotkey.com AHK Forum}
+ * @see {@link https://www.autohotkey.com/boards/viewtopic.php?f=83&t=138484 AHK Forum}
  ********************************************************************************************/
 class RadifySkinEditor {
     static __New()
@@ -2385,3 +2385,4 @@ class RadifySkinEditor {
     }
 
 }
+
