@@ -29,9 +29,9 @@ Inspired by [Radial menu v4](https://www.autohotkey.com/boards/viewtopic.php?f=6
 
 ## ✨ Built-In Menus
 
-- **Emojis Picker:** 50+ popular emojis.
-- **Symbols Picker:** 60+ common symbols.
-- **Websites:** 30+ frequently used websites.
+- **Emojis Picker:** 60+ popular emojis.
+- **Symbols Picker:** 50+ common symbols.
+- **Websites:** 50+ frequently used websites.
 - **Settings:** 15+ system settings (GUID and ms-settings: URI links).
 - **Tools:** 15+ Windows system utilities and administrative tools.
 - **Power Options:** Shutdown, Restart, Sleep, Advanced Startup, and Restart to Safe Mode.
@@ -65,7 +65,7 @@ Explore all customization options of the Radify class, configure settings, previ
 2. Select the **"Default"** skin (first in the list)
 3. Configure the settings as needed
 4. Click the **"Edit"** button
-5. Confirm with **"OK"** or **"Apply"**
+5. Click **"OK"** or **"Apply"**
 
 ---
 
@@ -103,7 +103,7 @@ Explore all customization options of the Radify class, configure settings, previ
 
 ***Radial menu v4 skins***
 
-- All settings are loaded from `Preferences.json` rather than from `skin definition.txt` files.
+- All settings are loaded from `Preferences.json` instead of individual `skin definition.txt` files.
 
 - To set the submenu indicator image, you can:
   - In **Radify Skin Editor**, set a default `SubmenuIndicatorImage`, or assign one per skin.
@@ -127,14 +127,14 @@ Steps:
 
 You can also configure these directories programmatically using the following methods:
 
-- `SetImageDir(dirPath)` – sets the image directory
-- `SetSoundDir(dirPath)` – sets the sound directory
+- `SetImageDir(dirPath)`
+- `SetSoundDir(dirPath)`
 
 ---
 
 ## 🗒️ Radify Skin Editor Notes
 
-- Reload any script using **Radify** after making changes.
+- Reload any script using **Radify** after making changes for the changes to take effect.
 
 ---
 
@@ -142,7 +142,7 @@ You can also configure these directories programmatically using the following me
 
 - ## As a Library in a Script
 
-Radify can be included as a library in any AutoHotkey v2 script.
+Radify can be included as a library in any AutoHotkey v2 script to create menus.
 
 **For example:**
 
@@ -166,10 +166,10 @@ Radify can be included as a library in any AutoHotkey v2 script.
         [   ; ring 1
             {image: 'device-manager.png', click: (*) => Run('devmgmt.msc')},
             {image: 'disk-management.png', click: (*) => Run('diskmgmt.msc')},
-            {image: 'computer-management.png', click: (*) => Run('mmc.exe compmgmt.msc')},
+            {image: 'computer-management.png', click: (*) => Run('compmgmt.msc')},
             {image: 'system-configuration.png', click: (*) => Run('msconfig.exe')},
             {image: 'system-information.png', click: (*) => Run('msinfo32.exe')},
-            {image: 'task-scheduler.png', click: (*) => Run('mmc.exe taskschd.msc')},
+            {image: 'task-scheduler.png', click: (*) => Run('taskschd.msc')},
         ],
         [   ; ring 2
             {image: 'services.png', click: (*) => Run('services.msc')},
@@ -215,7 +215,7 @@ Radify can be included as a library in any AutoHotkey v2 script.
 
 - ## Quick Start with Built-in Menus
 
-Run **Radify Menus.ahk** to access pre-built menus with 200+ items including emojis, symbols, websites, system settings, tools, and power options. You can add, customize, or remove items by editing the **Radify Menus.ahk** file directly.
+Run **Radify Menus.ahk** to access pre-built menus with 200+ items including emojis, symbols, websites, system settings, tools, and power options. You can create, customize, or modify items by editing the file.
 
 ---
 
@@ -223,7 +223,7 @@ Run **Radify Menus.ahk** to access pre-built menus with 200+ items including emo
 
 ## Open Menu
 
-- `Middle mouse button`: Opens *mainMenu* with the cursor centered on the menu.
+- `Middle mouse button`: Opens *mainMenu*
 - `Tray icon clicks`:
   - `Click`: Opens *mainMenu*
   - `Double-Click`: Opens *appsMenu*
@@ -256,6 +256,9 @@ Run **Radify Menus.ahk** to access pre-built menus with 200+ items including emo
 **Settings submenu**
 - `Right-Click` on submenu: Opens the *Windows Settings* app
 
+**Power Plans submenu**
+- `Right-Click` on submenu: Opens *Control Panel > Power Options*
+
 **Cleanup submenu**
 - `Click` on Recycle Bin item: Opens the Recycle Bin folder.
 - `Right-Click` on Recycle Bin item: Empties the Recycle Bin.
@@ -272,18 +275,16 @@ Run **Radify Menus.ahk** to access pre-built menus with 200+ items including emo
 
 Defines the characteristics and behavior of a menu item.
 
-Each item object may include:
-
-| Property      | Type   | Description
-| ------------- | ------ | -------------------------------------
-| `Image`       | string \| number | Image displayed on the menu item. See:  [Supported Image Formats](#supported-image-formats).
-| `Tooltip`     | string | Tooltip text shown on hover. See also: [`AutoTooltip`](#tooltip--effects).
-| `Text`        | string | Text to display on the menu item.
-| `Click`       | function object \| string | Action to execute when the item is clicked.
-| `RightClick`  | function object \| string | Action to execute when the item is right-clicked.
-| `CtrlClick`   | function object \| string | Action to execute when the item is ctrl+clicked. If the `CtrlClick` action is not defined, `Ctrl + Click` executes the item’s `Click` action (if defined), without closing the menu.
-| `ShiftClick`  | function object \| string | Action to execute when the item is shift-clicked.
-| `AltClick`    | function object \| string | Action to execute when the item is alt-clicked.
+| Property     | Type   | Description
+| ------------ | ------ | -------------------------------------
+| `Image`      | string \| number | Image displayed on the menu item. See:  [Supported Image Formats](#supported-image-formats).
+| `Tooltip`    | string | Tooltip text shown on hover. See also: [`AutoTooltip`](#tooltip--effects).
+| `Text`       | string | Text to display on the menu item.
+| `Click`      | function object \| string | Action to execute when the item is clicked.
+| `RightClick` | function object \| string | Action to execute when the item is right-clicked.
+| `CtrlClick`  | function object \| string | Action to execute when the item is ctrl+clicked. If the `CtrlClick` action is not defined, `Ctrl + Click` executes the item’s `Click` action (if defined), without closing the menu.
+| `ShiftClick` | function object \| string | Action to execute when the item is shift-clicked.
+| `AltClick`   | function object \| string | Action to execute when the item is alt-clicked.
 | `HotkeyClick`         | string | Hotkey that triggers the `Click` action.
 | `HotkeyRightClick`    | string | Hotkey that triggers the `RightClick` action.
 | `HotkeyCtrlClick`     | string | Hotkey that triggers the `CtrlClick` action.
@@ -294,7 +295,7 @@ Each item object may include:
 | `HotstringCtrlClick`  | string | Hotstring that triggers the `CtrlClick` action.
 | `HotstringShiftClick` | string | Hotstring that triggers the `ShiftClick` action.
 | `HotstringAltClick`   | string | Hotstring that triggers the `AltClick` action.
-| `SubMenu`             | array  | The submenu structure: an array of one or more inner arrays (rings), each containing [`item objects`](#item-object-properties).
+| `Submenu`             | array  | The submenu structure: an array of one or more inner arrays (rings), each containing [`item objects`](#item-object-properties).
 | `SubmenuOptions`      | object | Options specific to the submenu.
 
 ---
@@ -318,6 +319,8 @@ Each item object may include:
 
 - `Ctrl + Click`: If the `CtrlClick` action is not defined, `Ctrl + Click` executes the item’s `Click` action (if defined), without closing the menu.
 
+---
+
 **Empty Items:**
 
 - An empty object `{}` inserts a blank space in the menu, useful for spacing or alignment.
@@ -327,9 +330,9 @@ Each item object may include:
 # Supported Image Formats
 
 - File path to a standard image. (`png, jpeg, jpg, ico, gif, bmp, tif`)
-- Filename located in the `/Images` folder (include the file extension, e.g., `downloads.png`).
+- Image filename from the `/Images` folder (include the file extension, e.g., `downloads.png`).
 - Image handle (`hIcon`, `hBitmap`).
-- Icons from resource libraries (`.exe`, `.dll`, `.cpl`). Use the format: `full_path|iconN`, where `N` is the icon index. If `|iconN` is omitted, icon index 1 is used by default.
+- Icons from resource libraries (`.exe`, `.dll`, `.cpl`). Use the format: `fullPath|iconN`, where `N` is the icon index. If `|iconN` is omitted, icon index 1 is used by default.
   - Examples:
     - `A_WinDir '\System32\imageres.dll|icon19'`
     - `A_ProgramFiles '\Everything\Everything.exe'`
@@ -338,7 +341,19 @@ Each item object may include:
 
 # 🔧 Class Methods
 
-Available methods for the **Radify** class:
+Methods of the Radify class:
+
+## 🔧 `CreateMenu(MenuID, MenuItems, Options)`
+
+Creates a menu with the specified ID, structure, and configuration options.
+
+| Parameter   | Type   | Description
+| ----------- | ------ | -------------------------------------
+| `MenuID`    | string | Unique identifier of the menu.
+| `MenuItems` | array  | The menu structure: an array of one or more inner arrays (rings), each containing [item objects](#item-object-properties).
+| [`Options`](#options-object-properties) | object | Configuration options for the menu.
+
+---
 
 ## 🔧 `Show(MenuID, AutoCenterMouse)`
 
@@ -347,18 +362,18 @@ Shows the menu at the current mouse position.
 | Parameter | Type   | Description
 | --------- | ------ | -------------------------------------
 | `MenuID`  | string | Unique identifier of the menu.
-| `AutoCenterMouse`  | boolean | Center mouse cursor when showing menu.
+| `AutoCenterMouse` | boolean | Centers the mouse cursor when the menu is shown.
 
 ---
 
-## 🔧 `Close(MenuID, SuppressSounds)`
+## 🔧 `Close(MenuID, SuppressSound)`
 
 Closes the entire menu tree of the specified menu.
 
 | Parameter | Type   | Description
 | --------- | ------ | -------------------------------------
 | `MenuID`  | string | Unique identifier of the menu.
-| `SuppressSounds`   | boolean | Suppresses the menu close sound.
+| `SuppressSound` | boolean | Suppresses the menu close sound.
 
 ---
 
@@ -386,15 +401,42 @@ Omit the `.wav` extension when referencing sound files (e.g., `tada`).
 
 ---
 
-## 🔧 `CreateMenu(MenuID, MenuItems, Options)`
+# 🔧 Class Properties
 
-Creates a menu with the specified ID, structure, and configuration options.
+Properties of the **Radify** class:
 
-| Parameter   | Type   | Description
-| ----------- | ------ | -------------------------------------
-| `MenuID`    | string | Unique identifier of the menu.
-| `MenuItems` | array  | The menu structure: an array of one or more inner arrays (rings), each containing [item objects](#item-object-properties).
-| `Options`   | object | Configuration options for the menu.
+## 🔧 `lastMenuOpenInfo`
+
+Stores information about the last opened menu. Updated each time a menu is shown via the `Show` method.
+
+| Property         | Type   | Description
+|----------------- | ------ | ------------------------------------
+| `mouseX`         | number | X-coordinate when the menu was opened.
+| `mouseY`         | number | Y-coordinate when the menu was opened.
+| `hwndUnderMouse` | number | HWND of the window under the mouse when the menu was opened.
+
+**Access example:**
+
+    ; Toggles the always-on-top state of window
+    ToggleWindowAlwaysOnTop() {
+        info := Radify.lastMenuOpenInfo
+        hwndUnderMouse := info.hwndUnderMouse
+
+        try {
+            winTitleUM := WinGetTitle('ahk_id ' hwndUnderMouse)
+            winClassUM := WinGetClass('ahk_id ' hwndUnderMouse)
+        } catch
+            return
+
+        if (!winTitleUM || winTitleUM = 'Program Manager' || winClassUM = 'Shell_TrayWnd')
+            return
+
+        WinSetAlwaysOnTop(-1, 'ahk_id ' hwndUnderMouse)
+        exStyle := WinGetExStyle('ahk_id ' hwndUnderMouse)
+        CoordMode('ToolTip', 'Screen')
+        ToolTip(winTitleUM '`nAlways on Top "' (exStyle & 0x8 ? 'On' : 'Off') '"', info.mouseX, info.mouseY, 19)
+        SetTimer((*) => ToolTip(,,,19), -2500)
+    }
 
 ---
 
@@ -405,10 +447,10 @@ Configuration options for the menu.
 **Note:**
 
 Options apply only to the current menu and are not inherited by submenus, except for `skin`.
-To pass other options to submenus, use the `SubmenuOptions` key on individual menu items.
+To set options for submenus, use the `SubmenuOptions` property.
 
-Each menu's options are merged in the following order:
-- User-defined options passed to the `CreateMenu` method.
+Menu options are merged in the following order:
+- User-defined options passed to the `CreateMenu` method or the `SubmenuOptions` property.
 - Skin-defined options.
 - Global default options.
 
@@ -419,13 +461,13 @@ Each menu's options are merged in the following order:
 | Property                | Type             | Description
 |------------------------ | ---------------- | -------------------------------------
 | `Skin`                  | string           | Folder in `/Skins` containing skin assets.
-| `ItemGlowImage`         | string \| number | Glow effect image on hover. Requires `EnableGlow` to be `true`.
+| `ItemGlowImage`         | string \| number | Glow effect image displayed when hovering over a menu item. Requires `EnableGlow` to be `true`.
 | `MenuOuterRimImage`     | string \| number | Image for the outer rim of the menu.
 | `MenuBackgroundImage`   | string \| number | Background image of the menu.
 | `ItemBackgroundImage`   | string \| number | Background image for individual menu items. Requires `ItemBackgroundImageOnItems` to be `true`.
 | `CenterBackgroundImage` | string \| number | Background image for the center. Requires `ItemBackgroundImageOnCenter` to be `true`.
 | `CenterImage`           | string \| number | Image shown in the center of the menu.
-| `SubmenuIndicatorImage` | string \| number | Icon indicating a submenu.
+| `SubmenuIndicatorImage` | string \| number | Image indicating a submenu.
 
 ---
 
@@ -442,7 +484,7 @@ Each menu's options are merged in the following order:
 **Supported Sound Formats:**
 
 - Path to a `.wav` file.
-- Filename from the `C:\Windows\Media` folder or the configured `\Sounds` directory. Omit the `.wav` extension when referencing sound files (e.g., `tada`).
+- Sound filename from `C:\Windows\Media` or the `\Sounds` folder. Omit the `.wav` extension when referencing sound files (e.g., `tada`).
 
 ---
 
@@ -467,23 +509,24 @@ Each menu's options are merged in the following order:
 
 ### Text Styling
 
-| Property           | Type   | Description
-| ------------------ | ------ | -------------------------------------
-| `TextFont`         | string | Font name.
-| `TextColor`        | string | Font color in hex (e.g., `"FFFFFF"`).
-| `TextSize`         | number | Font size (5–100 px).
-| `TextFontOptions`  | string | Font styles (`bold`, `italic`, `strikeout`, `underline`) (e.g., `"bold italic"`).
-| `TextShadowColor`  | string | Shadow color in hex (e.g., `"000000"`).
-| `TextShadowOffset` | number | Shadow offset (0–5 px).
-| `TextBoxScale`     | number | Text box scale (0.5–1).
-| `TextYRatio`       | number | Text Y-position (0 = top, 0.5 = center, 1 = bottom).
-| `TextRendering`    | number | Rendering quality for text:
-|                    |        | - 0: Default
-|                    |        | - 1: SingleBitPerPixelGridFit
-|                    |        | - 2: SingleBitPerPixel
-|                    |        | - 3: AntiAliasGridFit
-|                    |        | - 4: AntiAlias
-|                    |        | - 5: ClearTypeGridFit
+| Property           | Type    | Description
+| ------------------ | ------- | -------------------------------------
+| `EnableItemText`   | boolean | Shows text labels on menu items.
+| `TextFont`         | string  | Font name.
+| `TextColor`        | string  | Font color in hex (e.g., `"FFFFFF"`).
+| `TextSize`         | number  | Font size (5–100 px).
+| `TextFontOptions`  | string  | Font styles (`bold`, `italic`, `strikeout`, `underline`) (e.g., `"bold italic"`).
+| `TextShadowColor`  | string  | Shadow color in hex (e.g., `"000000"`).
+| `TextShadowOffset` | number  | Shadow offset (0–5 px).
+| `TextBoxScale`     | number  | Text box scale (0.5–1).
+| `TextYRatio`       | number  | Text Y-position (0 = top, 0.5 = center, 1 = bottom).
+| `TextRendering`    | number  | Rendering quality for text:
+|                    |         | - 0: Default
+|                    |         | - 1: SingleBitPerPixelGridFit
+|                    |         | - 2: SingleBitPerPixel
+|                    |         | - 3: AntiAliasGridFit
+|                    |         | - 4: AntiAlias
+|                    |         | - 5: ClearTypeGridFit
 
 ---
 
@@ -491,7 +534,7 @@ Each menu's options are merged in the following order:
 
 | Property                  | Type    | Description
 |-------------------------- | ------- | -------------------------------------
-| `MirrorClickToRightClick` | boolean | Automatically assigns the `Click` function to `RightClick` for items that have a `Click` action but no `RightClick` action defined.
+| `MirrorClickToRightClick` | boolean | Automatically assigns the `Click` action to `RightClick` for items that have a `Click` action but no `RightClick` action defined.
 
 ---
 
@@ -520,7 +563,7 @@ These properties accept either a function object or a *predefined action*.
 |------------------------ | ------- | -------------------------------------
 | `CloseOnItemClick`      | boolean | Closes the entire menu tree when a menu item is clicked.
 | `CloseOnItemRightClick` | boolean | Closes the entire menu tree when a menu item is right-clicked.
-| `CloseMenuBlock`        | boolean | Prevents the menu from closing via the specific `HotIfWinExist(WinTitle)` example below. Close(MenuID) still works normally.
+| `CloseMenuBlock`        | boolean | Prevents the menu from closing via the specific `HotIfWinExist(WinTitle)` example below. `Close(MenuID)` still works normally.
     HotIfWinExist('RadifyGui_0_0 ahk_class AutoHotkeyGUI')
     Hotkey('Esc', (*) => WinClose(WinExist()))
     HotIfWinExist()
@@ -531,19 +574,18 @@ These properties accept either a function object or a *predefined action*.
 
 | Property          | Type    | Description
 | ----------------- | ------- | -------------------------------------
-| `AutoCenterMouse` | boolean | Center mouse cursor when showing menu.
+| `AutoCenterMouse` | boolean | Centers the mouse cursor when the menu is shown.
 | `AlwaysOnTop`     | boolean | Keeps the menu always on top.
 | `ActivateOnShow`  | boolean | Activates menu window on show.
 
 ---
 
 ### Tooltip & Effects
-| Property         | Type    | Description
-| ---------------- | ------- | -------------------------------------
-| `AutoTooltip`    | boolean | Generates the tooltip text if `Tooltip` is not set, based on item text or image name.
-| `EnableTooltip`  | boolean | Enables tooltips for menu items.
-| `EnableGlow`     | boolean | Enables glow effect on hover.
-| `EnableItemText` | boolean | Shows text labels on menu items.
+| Property        | Type    | Description
+| --------------- | ------- | -------------------------------------
+| `AutoTooltip`   | boolean | Generates the tooltip text if `Tooltip` is not set, based on item text or image name.
+| `EnableTooltip` | boolean | Enables tooltips for menu items.
+| `EnableGlow`    | boolean | Enables glow effect on hover.
 
 ---
 
