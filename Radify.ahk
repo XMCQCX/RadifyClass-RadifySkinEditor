@@ -1,18 +1,19 @@
 /*********************************************************************************************
  * Radify - A radial menu launcher with multi-ring layouts, submenus and interactive items.
  * @author Martin Chartier (XMCQCX)
- * @version 1.0.0
+ * @version 1.1.0
  * @license MIT
- * @date 2025-08-05
+ * @date 2025-08-28
  * @see {@link https://github.com/XMCQCX/RadifyClass-RadifySkinEditor GitHub}
  * @see {@link https://www.autohotkey.com/boards/viewtopic.php?f=83&t=138484 AHK Forum}
  ********************************************************************************************/
-class Radify {
+Class Radify {
     static __New()
     {
         this.menus := {}
         this.scriptName := 'Radify'
         this.isValidConfiguration := true
+        this.lastMenuOpenInfo := {mouseX: unset, mouseY: unset, hwndUnderMouse: unset}
         this.PI := 3.141592653589793
 
         this.defaults := {
@@ -153,15 +154,13 @@ class Radify {
                     this.skins.%skinName% := {}
             }
         } else {
-            this.ShowErrorMsg('Skins folder not found at:`n"' this.skinsDir '"')
             this.isValidConfiguration := false
-            return
+            return this.ShowErrorMsg('Skins folder not found at:`n"' this.skinsDir '"')
         }
 
         if (!ObjOwnPropCount(this.skins)) {
-            this.ShowErrorMsg('No valid skin found in skins folder:`n"' this.skinsDir '"')
             this.isValidConfiguration := false
-            return
+            return this.ShowErrorMsg('No valid skin found in skins folder:`n"' this.skinsDir '"')
         }
 
         ;==============================================
@@ -236,8 +235,7 @@ class Radify {
 
     static GetImagePaths()
     {
-        if (this.generals.imagesDir = 'rootDir\images')
-            this.generals.imagesDir := this.rootDir '\images'
+        this.generals.imagesDir := this.ReplaceRootDir(this.generals.imagesDir)
 
         this.images := {}
         this.arrImageExt := ['ico', 'png', 'jpeg', 'jpg', 'gif', 'bmp', 'tif']
@@ -255,8 +253,7 @@ class Radify {
 
     static GetSoundPaths()
     {
-        if (this.generals.soundsDir = 'rootDir\sounds')
-            this.generals.soundsDir := this.rootDir '\sounds'
+        this.generals.soundsDir := this.ReplaceRootDir(this.generals.soundsDir)
 
         this.sounds := {}
         for path in [A_WinDir '\Media', this.generals.soundsDir]
@@ -270,7 +267,7 @@ class Radify {
      * Must be called before creating a menu to change the directory.
      * The path may include the "rootDir\" prefix, which refers to the directory containing "Radify.ahk".
      *********************************************************************************************/
-    static SetImageDir(dirPath?) => this.SetDirectory('imagesDir', 'GetImagePaths', dirPath?)
+    static SetImageDir(dirPath?) => this.SetDirectory('image', dirPath?)
 
     /*********************************************************************************************
      * Sets the directory for sounds, allowing sound files to be referenced by filename only.
@@ -278,24 +275,35 @@ class Radify {
      * Must be called before creating a menu to change the directory.
      * The path may include the "rootDir\" prefix, which refers to the directory containing "Radify.ahk".
      *********************************************************************************************/
-    static SetSoundDir(dirPath?) => this.SetDirectory('soundsDir', 'GetSoundPaths', dirPath?)
+    static SetSoundDir(dirPath?) => this.SetDirectory('sound', dirPath?)
 
     ;=============================================================================================
 
-    static SetDirectory(dirType, refreshMethod, dirPath?)
+    static SetDirectory(dirType, dirPath?)
     {
-        if (!IsSet(dirPath) || Type(dirPath) != 'String' || dirPath = '')
-            dirPath := this.originalGenerals.%dirType%
+        if (IsSet(dirPath) && Type(dirPath) != 'String')
+            return this.ShowErrorMsg('Parameter #1 of Set' StrTitle(dirType) 'Dir requires a String. Received: ' Type(dirPath) '.')
 
-        if (RegExMatch(dirPath, 'i)^rootDir\\'))
-            dirPath := StrReplace(dirPath, 'rootDir', this.rootDir,,, 1)
+        if (!IsSet(dirPath) || dirPath = '')
+            dirPath := this.originalGenerals.%dirType%sDir
+
+        dirPath := this.ReplaceRootDir(dirPath)
 
         if (!DirExist(dirPath))
-            return this.ShowErrorMsg('Non-existent ' StrReplace(dirType, 'Dir', '') ' directory: "' dirPath '"')
+            return this.ShowErrorMsg('Non-existent ' StrTitle(dirType) 's directory: "' dirPath '"')
 
-        this.generals.%dirType% := dirPath
-        this.%refreshMethod%()
+        this.generals.%dirType%sDir := dirPath
+        this.Get%dirType%Paths()
         return true
+    }
+
+    ;=============================================================================================
+
+    static ReplaceRootDir(dirPath)
+    {
+        if (RegExMatch(dirPath, 'i)^rootDir\\'))
+            return StrReplace(dirPath, 'rootDir', this.rootDir,,, 1)
+        return dirPath
     }
 
     /*********************************************************************************************
@@ -347,6 +355,7 @@ class Radify {
                 this.RenderMenu(oMenu)
                 this.SetupMenuClickZones(oMenu)
                 this.RegisterItemKeyBindings(oMenu)
+                oMenu.isFullyInitialized := true
             }
 
             for (mId in newMenuIds) {
@@ -411,16 +420,17 @@ class Radify {
     {
         oMenu := {
             id: menuId,
+            menuItems: menuItems,
             options: {},
             rings: [],
+            itemList: [],
+            submenuIds: [],
             maxExtent: 0,
-            ctrlList: [],
+            prevHoveredIndex: 0,
             currentTooltip: 0,
             prevTooltipX: 0,
             prevTooltipY: 0,
-            prevHoveredIndex: 0,
-            submenuIds: [],
-            menuItems: menuItems,
+            isFullyInitialized: false
         }
 
         oMenu.parentMenuId := (parentMenuId ?? 0)
@@ -631,7 +641,6 @@ class Radify {
         Gdip_SetInterpolationMode(oMenu.G, oMenu.options.interpolationMode)
         Gdip_GraphicsClear(oMenu.G, 0x00FFFFFF)
         Gdip_ScaleWorldTransform(oMenu.G, dpiScale, dpiScale)
-        Gdip_GraphicsClear(oMenu.G, 0x00FFFFFF)
         menuSize := oMenu.size
         centerPoint := oMenu.centerPoint
 
@@ -667,7 +676,7 @@ class Radify {
                 hasCenterImage := true
         }
 
-        ; If no center background image was drawn, fill the center with a transparent ellipse to ensure the region can receive clicks.
+        ; If no background image is drawn in the center, fill it with a transparent circle to ensure the region detects clicks.
         if (!IsSet(hasCenterBgImage)) {
             pBrush := Gdip_BrushCreateSolid(0x01000000)
             Gdip_FillEllipse(oMenu.G, pBrush, centerX, centerY, centerSize, centerSize)
@@ -723,7 +732,7 @@ class Radify {
 
                 if (item.enableItemText && item.text) {
                     textBoxWidth := Round(item.itemSize * item.textBoxScale)
-                    textBoxHeight := Round(item.itemSize * item.textBoxScale * 1.2)
+                    textBoxHeight := Round(item.itemSize * item.textBoxScale)
                     argbColor := 'ff' item.textColor
                     argbShadowColor := 'ff' item.textShadowColor
                     textBoxX := Round(absX + (item.itemSize - textBoxWidth) / 2)
@@ -776,7 +785,7 @@ class Radify {
         if (oMenu.options.enableGlow)
             this.CreateGlowGui(oMenu)
 
-        this.DisposeMenuImages(oMenu)
+        this.DisposeMenuSkinImages(oMenu)
         return oMenu
     }
 
@@ -811,13 +820,15 @@ class Radify {
 
         SplitPath(image,,, &ext)
         if (ext && RegExMatch(ext, 'i)^(exe|dll|cpl)$'))
-            image :=  image '|icon1'
+            image .= '|icon1'
 
-        for path in [skinDir . image, image]
-            if (FileExist(path))
-                return Gdip_CreateBitmapFromFile(path)
+        if (FileExist(skinDir image))
+            return Gdip_CreateBitmapFromFile(skinDir image)
 
-        if (this.images.HasOwnProp(image))
+        if (FileExist(image))
+            return Gdip_CreateBitmapFromFile(image)
+
+        if (this.isInternalImage(image))
             return Gdip_CreateBitmapFromFile(this.images.%image%)
 
         if (iconRes := this.isIconResourceFile(image)) {
@@ -891,7 +902,7 @@ class Radify {
             centerX: centerPoint,
             centerY: centerPoint
         }
-        oMenu.ctrlList.Push(centerInfo)
+        oMenu.itemList.Push(centerInfo)
 
         for ringIdx, ring in oMenu.rings {
             for itemIdx, item in ring.items {
@@ -911,24 +922,21 @@ class Radify {
                     centerX: centerPoint + item.relX,
                     centerY: centerPoint + item.relY
                 }
-                oMenu.ctrlList.Push(itemInfo)
+                oMenu.itemList.Push(itemInfo)
             }
         }
 
         ; Process items from last to first created to avoid hitbox conflicts due to overlapping.
-        oMenu.ctrlList := this.ArrayReverse(oMenu.ctrlList)
+        oMenu.itemList := this.ArrayReverse(oMenu.itemList)
     }
 
     ;=============================================================================================
 
-    static IsPointInCircularZone(oMenu, ctrlIndex, relX, relY, mouseX, mouseY)
+    static IsPointInCircularZone(itemInfo, relX, relY)
     {
-        itemInfo := oMenu.ctrlList[ctrlIndex]
         distanceSquared := (relX - itemInfo.centerX)**2 + (relY - itemInfo.centerY)**2
         if (distanceSquared > itemInfo.radiusSquared)
             return false
-        oMenu.lastMouseX := mouseX
-        oMenu.lastMouseY := mouseY
         return true
     }
 
@@ -940,11 +948,10 @@ class Radify {
         relX := (mouseX - winX) / oMenu.dpiScale
         relY := (mouseY - winY) / oMenu.dpiScale
 
-        for index, itemInfo in oMenu.ctrlList {
-            if (this.IsPointInCircularZone(oMenu, index, relX, relY, mouseX, mouseY)) {
+        for index, itemInfo in oMenu.itemList {
+            if (this.IsPointInCircularZone(itemInfo, relX, relY)) {
                 if (itemInfo.isCenter)
                     continue
-
                 ring := oMenu.rings[itemInfo.ringIdx]
                 item := ring.items[itemInfo.itemIdx]
                 return {
@@ -967,11 +974,11 @@ class Radify {
             return false
 
         CoordMode('Mouse', 'Screen')
-        MouseGetPos(&mouseX, &mouseY, &winHwndUnderMouse, &ctrlHwndUnderMouse, 2)
+        MouseGetPos(&mouseX, &mouseY, &hwndUnderMouse, &ctrlHwndUnderMouse, 2)
 
-        if ((winHwndUnderMouse != oMenu.hwnd && ctrlHwndUnderMouse)
+        if ((hwndUnderMouse != oMenu.hwnd && ctrlHwndUnderMouse)
         || !DllCall('IsWindowEnabled', 'Ptr', oMenu.hwnd, 'Int')
-        || !DllCall('User32.dll\IsWindowVisible', 'ptr', oMenu.hwnd)) {
+        || !DllCall('User32.dll\IsWindowVisible', 'Ptr', oMenu.hwnd)) {
             this.HideEffects(oMenu)
             return false
         }
@@ -988,12 +995,7 @@ class Radify {
             return false
         }
 
-        return {
-            mouseX: mouseX,
-            mouseY: mouseY,
-            winHwndUnderMouse: winHwndUnderMouse,
-            ctrlHwndUnderMouse: ctrlHwndUnderMouse
-        }
+        return {mouseX: mouseX, mouseY: mouseY}
     }
 
     ;=============================================================================================
@@ -1002,49 +1004,36 @@ class Radify {
     {
         if (oMenu.options.enableGlow)
             try oMenu.glowGui.Hide()
+
         if (oMenu.options.enableTooltip)
             this.HideTooltip(oMenu, oMenu.currentTooltip)
+
         oMenu.prevHoveredIndex := 0
-    }
-
-    ;=============================================================================================
-
-    static ShowTooltip(oMenu, text)
-    {
-        oMenu.tooltipText := text
-        return ToolTip(text,,,20)
     }
 
     ;=============================================================================================
 
     static HideTooltip(oMenu, ttHwnd)
     {
-        if (oMenu.currentTooltip) {
-            ToolTip(,,,20)
-            oMenu.currentTooltip := oMenu.prevTooltipX := oMenu.prevTooltipY := 0
-            oMenu.tooltipText := ''
-        }
+        ToolTip(,,, 20)
+        oMenu.prevTooltipX := oMenu.prevTooltipY := oMenu.currentTooltip := 0
     }
 
-    ;=============================================================================================
-
+    /*********************************************************************************************
+     * @credits nperovic
+     * @see {@link https://github.com/nperovic/ToolTipEx GitHub}
+     */
     static UpdateTooltipPosition(oMenu, ttHwnd)
     {
-        if (!oMenu.currentTooltip || !oMenu.tooltipText)
-            return
+        if (!WinExist(ttHwnd))
+            return this.HideTooltip(oMenu, ttHwnd)
 
         SetWinDelay(-1)
-        if (!WinExist(ttHwnd)) {
-            this.HideTooltip(oMenu, ttHwnd)
-            oMenu.prevTooltipX := oMenu.prevTooltipY := 0
-            return
-        }
         newX := newY := 0
-        if (!this.CalculatePopupWindowPosition(oMenu, ttHwnd, &newX, &newY)) {
-            this.HideTooltip(oMenu, ttHwnd)
-            oMenu.prevTooltipX := oMenu.prevTooltipY := 0
-            return
-        }
+
+        if (!this.CalculatePopupWindowPosition(ttHwnd, &newX, &newY))
+            return this.HideTooltip(oMenu, ttHwnd)
+
         if (newX != oMenu.prevTooltipX || newY != oMenu.prevTooltipY) {
             try WinMove(newX, newY,,, 'ahk_id ' ttHwnd)
             oMenu.prevTooltipX := newX
@@ -1074,25 +1063,24 @@ class Radify {
                     this.HideTooltip(oMenu, oMenu.currentTooltip)
 
                     if (itemInfo.item.tooltip)
-                        oMenu.currentTooltip := this.ShowTooltip(oMenu, itemInfo.item.tooltip)
+                        oMenu.currentTooltip := ToolTip(itemInfo.item.tooltip,,, 20)
                 }
             }
             else if (oMenu.options.enableTooltip && oMenu.currentTooltip)
                 this.UpdateTooltipPosition(oMenu, oMenu.currentTooltip)
         }
-        else
-            this.HideEffects(oMenu)
+        else this.HideEffects(oMenu)
     }
 
     /*********************************************************************************************
-     * @credits lexikos
+     * @credits lexikos, nperovic
      * @see {@link https://www.autohotkey.com/boards/viewtopic.php?t=103459 AHK Forum}
+     * @see {@link https://github.com/nperovic/ToolTipEx GitHub}
      */
-    static CalculatePopupWindowPosition(oMenu, hwnd, &newX, &newY)
+    static CalculatePopupWindowPosition(hwnd, &newX, &newY)
     {
-        static flags := VerCompare(A_OSVersion, '6.2') < 0 ? 0 : 0x10000
+        static flags := (VerCompare(A_OSVersion, '6.2') < 0 ? 0 : 0x10000)
         try {
-            WinGetClientPos(&menuLeft, &menuTop,,, oMenu.hwnd)
             winRect := Buffer(16, 0)
             DllCall('GetClientRect', 'Ptr', hwnd, 'Ptr', winRect)
             CoordMode('Mouse', 'Screen')
@@ -1102,12 +1090,10 @@ class Radify {
             excludeRect := Buffer(16, 0)
             NumPut('Int', mouseX - 3, 'Int', mouseY - 3, 'Int', mouseX + 3, 'Int', mouseY + 3, excludeRect)
             outRect := Buffer(16, 0)
-            if (DllCall('CalculatePopupWindowPosition', 'Ptr', anchorPt, 'Ptr', winRect.Ptr + 8, 'UInt', flags, 'Ptr', excludeRect, 'Ptr', outRect)) {
-                newX := NumGet(outRect, 0, 'Int')
-                newY := NumGet(outRect, 4, 'Int')
-                return true
-            }
-            return false
+            DllCall('CalculatePopupWindowPosition', 'Ptr', anchorPt, 'Ptr', winRect.Ptr + 8, 'UInt', flags, 'Ptr', excludeRect, 'Ptr', outRect)
+            newX := NumGet(outRect, 0, 'Int')
+            newY := NumGet(outRect, 4, 'Int')
+            return true
         }
         return false
     }
@@ -1131,18 +1117,20 @@ class Radify {
      */
     static Show(menuId, autoCenterMouse?)
     {
-        if (!this.menus.HasOwnProp(menuId)) {
-            this.ShowErrorMsg('Menu not found: "' menuId '".')
-            return
-        }
+        if (!this.menus.HasOwnProp(menuId))
+            return this.ShowErrorMsg(A_ThisFunc ' - Menu not found: "' menuId '".')
 
         oMenu := this.menus.%menuId%
+
+        if (!oMenu.isFullyInitialized)
+            return this.ShowErrorMsg(A_ThisFunc ' - Menu not fully initialized: "' menuId '".')
 
         if (DllCall('User32.dll\IsWindowVisible', 'ptr', oMenu.hwnd))
             this.Close(menuId, true)
 
         CoordMode('Mouse', 'Screen')
-        MouseGetPos(&mouseX, &mouseY)
+        MouseGetPos(&mouseX, &mouseY, &hwndUnderMouse)
+        this.lastMenuOpenInfo := {mouseX: mouseX, mouseY: mouseY, hwndUnderMouse: hwndUnderMouse}
         this.ShowAt(oMenu, mouseX, mouseY, autoCenterMouse?)
     }
 
@@ -1180,23 +1168,23 @@ class Radify {
     /*********************************************************************************************
      * Closes the entire menu tree of the specified menu.
      * @param {string} menuId - Unique identifier of the menu.
-     * @param {boolean} suppressSounds - Suppresses the menu close sound.
+     * @param {boolean} suppressSound - Suppresses the menu close sound.
      */
-    static Close(menuId, suppressSounds := false, *)
+    static Close(menuId, suppressSound := false, *)
     {
         if (!this.menus.HasOwnProp(menuId))
             return
 
         oMenu := this.menus.%menuId%
 
-        if (!DllCall('User32.dll\IsWindowVisible', 'ptr', oMenu.hwnd))
+        if (!oMenu.isFullyInitialized || !DllCall('User32.dll\IsWindowVisible', 'ptr', oMenu.hwnd))
             return
 
         for submenuId in oMenu.submenuIds
             if (this.menus.HasOwnProp(submenuId))
                 this.Close(submenuId, true)
 
-        if (!suppressSounds && !oMenu.parentMenuId)
+        if (!suppressSound && !oMenu.parentMenuId)
             this.PlaySound(oMenu.options.soundOnClose)
 
         try oMenu.gui.Hide()
@@ -1209,18 +1197,19 @@ class Radify {
 
     ;=============================================================================================
 
-    static CloseMenu(menuId, suppressSounds := false)
+    static CloseMenu(menuId, suppressSound := false)
     {
         if (!this.menus.HasOwnProp(menuId))
             return
 
         oMenu := this.menus.%menuId%
-        parentMenu := (oMenu.parentMenuId ? this.menus.%oMenu.parentMenuId% : 0)
 
-        if (!DllCall('User32.dll\IsWindowVisible', 'ptr', oMenu.hwnd))
+        if (!oMenu.isFullyInitialized || !DllCall('User32.dll\IsWindowVisible', 'ptr', oMenu.hwnd))
             return
 
-        if (!suppressSounds)
+        parentMenu := (oMenu.parentMenuId ? this.menus.%oMenu.parentMenuId% : 0)
+
+        if (!suppressSound)
             this.PlaySound(oMenu.options.soundOnClose)
 
         try oMenu.gui.Hide()
@@ -1246,6 +1235,9 @@ class Radify {
 
     static ToggleSubmenu(parentMenu, submenuId, parentX, parentY, *)
     {
+        if (!this.menus.%submenuId%.isFullyInitialized || !parentMenu.isFullyInitialized)
+            return
+
         submenu := this.menus.%submenuId%
         submenuIsVisible := DllCall('User32.dll\IsWindowVisible', 'ptr', submenu.hwnd)
 
@@ -1281,15 +1273,12 @@ class Radify {
         relY := (mouseY - winY) / oMenu.dpiScale
         soundPlayed := false
 
-        for (index, itemInfo in oMenu.ctrlList) {
-            if (this.IsPointInCircularZone(oMenu, index, relX, relY, mouseX, mouseY)) {
+        for (index, itemInfo in oMenu.itemList) {
+            if (this.IsPointInCircularZone(itemInfo, relX, relY)) {
                 if (itemInfo.isCenter) {
-                    if (oMenu.parentMenuId && clickName == 'click') {
-                        parentMenu := this.menus.%oMenu.parentMenuId%
-                        this.ToggleSubmenu(parentMenu, oMenu.id, 0, 0)
-                        this.RefreshTooltipZOrder(oMenu)
-                        return
-                    }
+                    if (oMenu.parentMenuId && clickName == 'click')
+                        return this.ToggleSubmenu(this.menus.%oMenu.parentMenuId%, oMenu.id, 0, 0)
+
                     clickName := 'center' clickName
                     action := oMenu.options.%clickName%
                     close := (action = 'close')
@@ -1299,21 +1288,18 @@ class Radify {
 
                     if (clickName == 'click') {
                         switch {
-                            case GetKeyState('Shift', 'P'): result := GetActionAndClose(item, 'shiftClick')
-                            case GetKeyState('Alt', 'P'): result := GetActionAndClose(item, 'altClick')
-                            case GetKeyState('Ctrl', 'P'): result := (item.ctrlClick ? GetActionAndClose(item, 'ctrlClick') : {action: item.click, close: false})
+                            case GetKeyState('Shift', 'P'):
+                                result := GetActionAndClose(item, 'shiftClick')
+                            case GetKeyState('Alt', 'P'):
+                                result := GetActionAndClose(item, 'altClick')
+                            case GetKeyState('Ctrl', 'P'):
+                                result := (item.ctrlClick ? GetActionAndClose(item, 'ctrlClick') : {action: item.click, close: false})
                             default:
-                            {
-                                if (item.submenuId) {
-                                    this.ToggleSubmenu(oMenu, item.submenuId, item.absX, item.absY)
-                                    this.RefreshTooltipZOrder(oMenu)
-                                    return
-                                }
+                                if (item.submenuId)
+                                    return this.ToggleSubmenu(oMenu, item.submenuId, item.absX, item.absY)
                                 result := GetActionAndClose(item, 'click')
-                            }
                         }
-                    } else
-                        result := GetActionAndClose(item, 'rightClick')
+                    } else result := GetActionAndClose(item, 'rightClick')
 
                     action := result.action
                     close := result.close
@@ -1341,11 +1327,9 @@ class Radify {
         } else if (Type(action) == 'String') {
             switch action, false {
                 case 'closeMenu':
-                    this.CloseMenu(oMenu.id, soundPlayed)
-                    return
+                    return this.CloseMenu(oMenu.id, soundPlayed)
                 case 'drag':
-                    PostMessage(0xA1, 2,,, oMenu.hwnd)
-                    return
+                    return PostMessage(0xA1, 2,,, oMenu.hwnd)
             }
         }
 
@@ -1510,7 +1494,7 @@ class Radify {
 
     static DisposeMenuResources(oMenu)
     {
-        this.DisposeMenuImages(oMenu)
+        this.DisposeMenuSkinImages(oMenu)
 
         if (oMenu.HasOwnProp('G') && oMenu.G) {
             Gdip_DeleteGraphics(oMenu.G)
@@ -1551,7 +1535,7 @@ class Radify {
 
     ;=============================================================================================
 
-    static DisposeMenuImages(oMenu)
+    static DisposeMenuSkinImages(oMenu)
     {
         for key in this.imageKeyToFileName.OwnProps() {
             if (oMenu.HasOwnProp('p' key) && oMenu.p%key%) {
@@ -1570,8 +1554,7 @@ class Radify {
 
         Loop MonitorGetCount() {
             MonitorGet(A_Index, &monLeft, &monTop, &monRight, &monBottom)
-            if (mouseX >= monLeft && mouseX < monRight &&
-                mouseY >= monTop && mouseY < monBottom)
+            if (mouseX >= monLeft && mouseX < monRight && mouseY >= monTop && mouseY < monBottom)
                 return A_Index
         }
         return MonitorGetPrimary()
@@ -1893,6 +1876,4 @@ class JSON_thqby_Radify {
 			return s
 		}
 	}
-
 }
-
