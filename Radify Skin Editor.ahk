@@ -1,4 +1,4 @@
-﻿#Requires AutoHotkey v2.0
+#Requires AutoHotkey v2.0
 #SingleInstance
 
 #Include Radify.ahk
@@ -18,9 +18,9 @@ if (!pToken := Gdip_Startup())
 /*********************************************************************************************
  * Radify Skin Editor - Explore all customization options of the Radify class, configure settings, preview skins, and more.
  * @author Martin Chartier (XMCQCX)
- * @version 1.0.0
+ * @version 1.1.0
  * @license MIT
- * @date 2025-08-05
+ * @date 2025-08-28
  * @see {@link https://github.com/XMCQCX/RadifyClass-RadifySkinEditor GitHub}
  * @see {@link https://www.autohotkey.com/boards/viewtopic.php?f=83&t=138484 AHK Forum}
  ********************************************************************************************/
@@ -28,7 +28,7 @@ class RadifySkinEditor {
     static __New()
     {
         this.scriptName := 'Radify Skin Editor'
-        this.scriptVersion := 'v1.0.0'
+        this.scriptVersion := 'v1.1.0'
         this.linkGitHubRepo := 'https://github.com/XMCQCX/RadifyClass-RadifySkinEditor'
         this.gMainTitle := this.scriptName ' - ' this.scriptVersion
         this.debounceTimers := {}
@@ -315,7 +315,7 @@ class RadifySkinEditor {
         this.gMain.ddl_skins := this.gMain.Add('DropDownList', 'xp+10 yp+20 Section vskin', this.arrSkins)
         this.gMain.ddl_skins.OnEvent('Change', this.DebounceCall.Bind(this, 125, 'gMain_ddl_skins_Change', 'skin'))
         this.gMain.btn_copySkin := this.gMain.Add('Button', 'x+5 yp-3 w' btnSize ' h' btnSize)
-        this.gMain.btn_copySkin.OnEvent('Click', this.CopyToClipboard.Bind(this, 'skin'))
+        this.gMain.btn_copySkin.OnEvent('Click', this.CopyToClipboard.Bind(this, 'skin', 'skins'))
         GuiButtonIcon(this.gMain.btn_copySkin, this.mIcons['clipBoard'], 1, 's20')
         this.gMain.btn_editSkin := this.gMain.Add('Button', 'x+5 yp w' btnSize ' h' btnSize)
         this.gMain.btn_editSkin.OnEvent('Click', this.gSkin_Show.Bind(this, 'edit'))
@@ -480,7 +480,7 @@ class RadifySkinEditor {
         this.gMain.btn_textColorPicker.OnEvent('Click', this.gMain_btn_colorPicker_Click.Bind(this, 'textColor'))
         GuiButtonIcon(this.gMain.btn_textColorPicker, this.mIcons['colorPicker'], 1, 's20')
         this.gMain.btn_copyFont := this.gMain.Add('Button', 'x+60 yp w' btnSize ' h' btnSize)
-        this.gMain.btn_copyFont.OnEvent('Click', this.CopyToClipboard.Bind(this, 'font'))
+        this.gMain.btn_copyFont.OnEvent('Click', this.CopyToClipboard.Bind(this, 'font', 'textFont'))
         GuiButtonIcon(this.gMain.btn_copyFont, this.mIcons['clipBoard'], 1, 's20')
         this.gMain.txt_textSize := this.gMain.Add('Text', 'xs +0x0100', 'Size:')
         this.gMain.edit_textSize := this.gMain.Add('Edit', 'xs+40 yp-2 w50 vtextSize Number Limit' StrLen(Radify.range.textSize[2]))
@@ -541,7 +541,7 @@ class RadifySkinEditor {
 
         ;==============================================
 
-        txt_itemGlowImage := '➤ ItemGlowImage - Glow effect image on hover.'
+        txt_itemGlowImage := '➤ ItemGlowImage - Glow effect image displayed when hovering over a menu item.'
         txt_menuOuterRimImage := '➤ MenuOuterRimImage - Image for the outer rim of the menu.'
         txt_menuBackgroundImage := '➤ MenuBackgroundImage - Background image of the menu.'
         txt_itemBackgroundImage := '➤ ItemBackgroundImage - Background image for individual menu items.'
@@ -611,14 +611,14 @@ class RadifySkinEditor {
             ['cb_enableTooltip', '➤ EnableTooltip - Enables tooltips for menu items.'],
             ['cb_enableGlow', '➤ EnableGlow - Enables glow effect on hover.'],
             ['cb_autoTooltip', '➤ AutoTooltip - Generates the tooltip text if "Tooltip" is not set, based on item text or image name.'],
-            ['cb_autoCenterMouse', '➤ AutoCenterMouse - Center mouse cursor when showing menu.'],
+            ['cb_autoCenterMouse', '➤ AutoCenterMouse - Centers the mouse cursor when the menu is shown.'],
             ['txt_menuClick', '➤ MenuClick - Action to execute when clicking the menu background.'],
             ['txt_menuRightClick', '➤ MenuRightClick - Action to execute when right-clicking the menu background.'],
             ['txt_centerClick', '➤ CenterClick - Action to execute when clicking the center area.'],
             ['txt_centerRightClick', '➤ CenterRightClick - Action to execute when right-clicking the center area.'],
             ['cb_closeOnItemClick', '➤ CloseOnItemClick - Closes the entire menu tree when a menu item is clicked.'],
             ['cb_closeOnItemRightClick', '➤ CloseOnItemRightClick - Closes the entire menu tree when a menu item is right-clicked.'],
-            ['cb_mirrorClickToRightClick', '➤ MirrorClickToRightClick - Automatically assigns the "Click" function to "RightClick".'],
+            ['cb_mirrorClickToRightClick', '➤ MirrorClickToRightClick - Automatically assigns the "Click" action to "RightClick".'],
             ['cb_closeMenuBlock', '➤ CloseMenuBlock - Prevents the menu from closing. See the documentation for details.'],
             ['cb_enableItemText', '➤ EnableItemText - Shows text labels on menu items.'],
             ['cb_itemBackgroundImageOnCenter', '➤ ItemBackgroundImageOnCenter - Apply item background image to the center.'],
@@ -810,10 +810,13 @@ class RadifySkinEditor {
         this.gMain.ddl_%ctrlName%.GetPos(,, &ctrlWidth)
         txtTip := (this.ControlGetTextWidth(this.gMain.ddl_%ctrlName%.hwnd, image)) > (ctrlWidth - 25) ? image : 'Drag and drop images here.'
         this.gMain.Tips.SetTip(this.gMain.ddl_%ctrlName%, txtTip)
-        pBitmap := Radify.LoadImage(image, skinDir)
-        this.gMain.pic_%ctrlName%.Value := ((hBitmap := Gdip_CreateHBITMAPFromBitmap(pBitmap)) ? 'HBITMAP:*' hBitmap : this.mIcons['transIcon'])
-        Gdip_DisposeImage(pBitmap)
-        DeleteObject(hBitmap)
+
+        switch {
+            case FileExist(skinDir image): this.gMain.pic_%ctrlName%.Value := skinDir image
+            case FileExist(image): this.gMain.pic_%ctrlName%.Value := image
+            case Radify.isInternalImage(image): this.gMain.pic_%ctrlName%.Value := Radify.images.%image%
+            default: this.gMain.pic_%ctrlName%.Value := this.mIcons['transIcon']
+        }
     }
 
     ;=============================================================================================
@@ -1935,20 +1938,19 @@ class RadifySkinEditor {
 
     ;=============================================================================================
 
-    static CopyToClipboard(param, ctrlName := '', strOpts:='', *)
+    static CopyToClipboard(param, ctrlName :='', strOpts:='', *)
     {
+        msg := this.gMain.ddl_%ctrlName%.Text
+
+        if (!msg || (param == 'sound' && msg = 'none') || (param == 'skin' && msg = 'default'))
+            return
+
         strClip := ' copied to clipboard'
 
         switch param {
-            case 'skin': title := 'Skin name' strClip, msg := this.gMain.ddl_skins.Text
-            case 'font': title := 'Font name' strClip, msg := this.gMain.ddl_textFont.Text
-            case 'sound', 'image', 'bgImg':
-            {
-                title := (param == 'bgImg' ? 'Background Image' : StrTitle(param)) strClip
-
-                if (msg := this.gMain.ddl_%ctrlName%.Text) = 'none'
-                    return
-            }
+            case 'skin': title := 'Skin name' strClip
+            case 'font': title := 'Font name' strClip
+            case 'sound', 'image': title := StrTitle(param) strClip
             default: title := 'Content' strClip, msg := param
         }
 
@@ -2383,6 +2385,4 @@ class RadifySkinEditor {
             return true
         }
     }
-
 }
-
