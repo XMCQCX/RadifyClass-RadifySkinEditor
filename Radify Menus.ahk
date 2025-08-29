@@ -1,13 +1,13 @@
-﻿#Requires AutoHotkey v2.0
+#Requires AutoHotkey v2.0
 #SingleInstance
 
-#Include Radify.ahk
 #Include .\Lib\Gdip_All.ahk
+#Include Radify.ahk
 
 /*********************************************************************************************
  * @file Radify Menus.ahk
- * @version 1.0.0
- * @date 2025-08-05
+ * @version 1.1.0
+ * @date 2025-08-28
  * @see {@link https://github.com/XMCQCX/RadifyClass-RadifySkinEditor GitHub}
  * @see {@link https://www.autohotkey.com/boards/viewtopic.php?f=83&t=138484 AHK Forum}
  ********************************************************************************************/
@@ -52,8 +52,8 @@ websitesMenu := [
     ],
     [   ; ring 2
         {image: 'google-drive.png', click: (*) => Run('https://drive.google.com')},
-        {image: 'google-keep.png', click: (*) => Run('https://keep.google.com')},
         {image: 'google-photos.png', click: (*) => Run('https://photos.google.com')},
+        {image: 'google-keep.png', click: (*) => Run('https://keep.google.com')},
         {image: 'reddit.png', click: (*) => Run('https://www.reddit.com')},
         {image: 'odysee.png', click: (*) => Run('https://odysee.com')},
         {image: 'rumble.png', click: (*) => Run('https://rumble.com')},
@@ -111,7 +111,7 @@ websitesMenu := [
     ],
 ]
 
-websitesMenuOptions := {mirrorClickToRightClick: true, closeOnItemRightClick: false}
+websitesMenuOptions := {mirrorClickToRightClick: true, closeOnItemRightClick: false, itemSize: 60}
 
 Radify.CreateMenu('websitesMenu', websitesMenu, websitesMenuOptions)
 
@@ -127,9 +127,9 @@ aiMenu := [
         {image: 'perplexity.png', click: (*) => Run('https://www.perplexity.ai')},
     ],
     [
-        {image: 'mistral.png', click: (*) => Run('https://chat.mistral.ai')},
         {image: 'microsoft-copilot.png', click: (*) => Run('https://copilot.microsoft.com')},
         {image: 'bing.png', click: (*) => Run('https://www.bing.com/images/create'), tooltip: 'Bing Image Creator'},
+        {image: 'mistral.png', click: (*) => Run('https://chat.mistral.ai')},
         {image: 'openrouter.png', click: (*) => Run('https://openrouter.ai')},
         {image: 'huggingface.png', click: (*) => Run('https://huggingface.co/chat')},
         {image: 'poe.png', click: (*) => Run('https://poe.com')},
@@ -240,7 +240,23 @@ settingsMenu := [
         {image: 'windows-defender.png', click: (*) => Run('explorer.exe windowsdefender:')},
         {image: 'folder-options.png', click: (*) => Run('shell:::{6DFD7C5C-2451-11d3-A299-00C04F8EF6AF}')},
         {image: 'control-panel.png', click: (*) => Run('shell:::{26EE0668-A00A-44D7-9371-BEB064C98683}'), tooltip: 'Control Panel'},
-        {image: 'control-panel.png', click: (*) => Run('shell:::{ED7BA470-8E54-465E-825C-99712043E01C}'), tooltip: 'All Tasks'},
+        {
+            image: 'control-panel.png',
+            click: (*) => Run('shell:::{ED7BA470-8E54-465E-825C-99712043E01C}'),
+            text: 'All Tasks',
+            itemImageScale: 0.40,
+            itemImageYRatio: 0.20,
+            textYRatio: 0.65,
+        },
+        {
+            image: 'programs-features.png',
+            click: (*) => Run('OptionalFeatures.exe'),
+            tooltip: 'Turn Windows features on or off',
+            text: 'Windows`nFeatures',
+            itemImageScale: 0.35,
+            itemImageYRatio: 0.20,
+            textYRatio: 0.70,
+        },
 	],
 ]
 
@@ -252,10 +268,10 @@ toolsMenu := [
 	[
         {image: 'device-manager.png', click: (*) => Run('devmgmt.msc')},
 		{image: 'disk-management.png', click: (*) => Run('diskmgmt.msc')},
-		{image: 'computer-management.png', click: (*) => Run('mmc.exe compmgmt.msc')},
+		{image: 'computer-management.png', click: (*) => Run('compmgmt.msc')},
 		{image: 'system-configuration.png', click: (*) => Run('msconfig.exe')},
         {image: 'system-information.png', click: (*) => Run('msinfo32.exe')},
-		{image: 'task-scheduler.png', click: (*) => Run('mmc.exe taskschd.msc')},
+		{image: 'task-scheduler.png', click: (*) => Run('taskschd.msc')},
 	],
 	[
         {image: 'windows-tools.png', click: (*) => Run('shell:::{D20EA4E1-3957-11D2-A40B-0C5020524153}')},
@@ -270,7 +286,7 @@ toolsMenu := [
             click: (*) => Run('resmon.exe'),
             text: 'Resmon',
             tooltip: 'Resource Monitor',
-            itemImageScale: 0.35,
+            itemImageScale: 0.40,
             itemImageYRatio: 0.25,
             textYRatio: 0.75,
         },
@@ -279,7 +295,7 @@ toolsMenu := [
             click: (*) => Run('perfmon.exe'),
             text: 'Perfmon',
             tooltip: 'Performance Monitor',
-            itemImageScale: 0.35,
+            itemImageScale: 0.40,
             itemImageYRatio: 0.25,
             textYRatio: 0.75,
         },
@@ -317,13 +333,13 @@ systemCleanupMenu := [
 	[
         {
             image: 'recycle-bin.png',
-            rightClick: (*) => Run('Scripts\EmptyRecycleBin.ahk'),
             click: (*) => Run('shell:::{645FF040-5081-101B-9F08-00AA002F954E}'),
-            tooltip: 'Click: Open Recycle Bin`nRight-Click: Empty Recycle Bin',
+            rightClick: (*) => Run('Scripts\EmptyRecycleBin.ahk'),
+            tooltip: 'Click: Open recycle bin`nRight-Click: Empty recycle bin',
         },
         {image: 'disk-cleanup.png', click: (*) => Run('cleanmgr.exe')},
         {text: 'Win Temp', click: (*) => Run(A_WinDir '\Temp'), tooltip: 'Windows system Temp folder'},
-        {text: 'Temp', click: (*) => Run(A_Temp), tooltip: 'User temporary files folder'},
+        {text: 'Temp', click: (*) => Run(A_Temp), tooltip: 'User Temp Folder'},
         {text: 'Prefetch', click: (*) => Run(A_WinDir '\Prefetch'), tooltip: 'Prefetch folder'},
         {text: 'Software Distribution', click: (*) => Run(A_WinDir '\SoftwareDistribution\Download'), tooltip: 'Windows Update cache folder', textSize:9},
         {text: 'Storage Sense', click: (*) => Run('ms-settings:storagesense')},
@@ -534,7 +550,7 @@ Radify.CreateMenu('mainMenu', [
             image: 'folder.png',
             text: 'Folders',
             tooltip: '• Folders •`nRight-Click: Open This PC',
-            rightClick: (*) => Run('shell:::{20D04FE0-3AEA-1069-A2D8-08002B30309D}'), ; This PC
+            rightClick: (*) => Run('shell:::{20D04FE0-3AEA-1069-A2D8-08002B30309D}'),
             itemImageScale: 0.30,
             itemImageYRatio: 0.40,
             textYRatio: 0.75,
@@ -614,7 +630,8 @@ Radify.CreateMenu('mainMenu', [
         {
             image: 'power-plans.png',
             text: 'Plans',
-            tooltip: 'Switch Power Plan',
+            tooltip: '• Power Plans •`nRight-Click: Open Control Panel > Power Options',
+            rightClick: (*) => Run('powercfg.cpl'),
             itemImageScale: 0.30,
             itemImageYRatio: 0.40,
             textYRatio: 0.75,
@@ -662,7 +679,7 @@ Radify.CreateMenu('mainMenu', [
         {},
         {},
         {},
-        {image: 'power-options-control-panel.png', click: (*) => Run('powercfg.cpl')},
+        {},
         {image: 'control-panel.png', click: (*) => Run('shell:::{26EE0668-A00A-44D7-9371-BEB064C98683}')},
         {image: 'task-manager.png', click: (*) => Run('taskmgr.exe')},
         {image: 'system-display-settings-app.png', click: (*) => Run('ms-settings:display'), tooltip: 'Display settings'},
@@ -776,6 +793,4 @@ ToggleSuspend() {
     A_TrayMenu.%(A_IsSuspended ? 'Check' : 'Uncheck')%('Suspend Hotkeys')
 }
 
-
 ;==============================================
-
