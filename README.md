@@ -405,7 +405,7 @@ Omit the `.wav` extension when referencing sound files (e.g., `tada`).
 
 Properties of the **Radify** class:
 
-## 🔧 `lastMenuOpenInfo`
+## 🔧 `LastMenuOpenInfo`
 
 Stores information about the last opened menu. Updated each time a menu is shown via the `Show` method.
 
@@ -437,6 +437,12 @@ Stores information about the last opened menu. Updated each time a menu is shown
         ToolTip(winTitleUM '`nAlways on Top "' (exStyle & 0x8 ? 'On' : 'Off') '"', info.mouseX, info.mouseY, 19)
         SetTimer((*) => ToolTip(,,,19), -2500)
     }
+
+---
+
+## 🔧 `RootDir`
+
+Stores the absolute path to the directory containing the script `Radify.ahk` or the compiled executable.    
 
 ---
 
