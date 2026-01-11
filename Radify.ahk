@@ -706,10 +706,10 @@ Class Radify {
                     item.pImage := this.LoadImage(item.image, oMenu.skinDir)
 
                     if (item.pImage) {
-                        imgSize := Round(item.itemSize * item.itemImageScale)
-                        imgX := Round(absX + (item.itemSize - imgSize) / 2)
-                        imgY := Round(absY + item.itemImageYRatio * (item.itemSize - imgSize))
-                        Gdip_DrawImage(oMenu.G, item.pImage, imgX, imgY, imgSize, imgSize)
+                        item.imgSize := Round(item.itemSize * item.itemImageScale)
+                        item.imgX := Round(absX + (item.itemSize - item.imgSize) / 2)
+                        item.imgY := Round(absY + item.itemImageYRatio * (item.itemSize - item.imgSize))
+                        Gdip_DrawImage(oMenu.G, item.pImage, item.imgX, item.imgY, item.imgSize, item.imgSize)
                         Gdip_DisposeImage(item.pImage)
                     }
                 }
@@ -965,7 +965,39 @@ Class Radify {
         }
         return false
     }
-
+		
+	/*********************************************************************************************
+    * Updates image for existing menu item.
+    * @param {string} menuId - Unique identifier of the menu.
+    * @param {string} itemText - The value of the `text` property for the item object that needs to be found in the menu.
+    * @param {string} image - Full path to the new image or image filename, see {@link SetImageDir}.
+    */
+    static SetItemImage(menuId, itemText, image) {    
+        if (!this.menus.HasOwnProp(menuId))
+            return this.ShowErrorMsg(A_ThisFunc ' - Menu not found.', menuId)
+        
+        oMenu := this.menus.%menuId%
+        
+        for ring in oMenu.rings {
+            for item in ring.items {
+                if (item.text != itemText)
+                    continue
+                
+                item.image  := image
+                item.pImage := this.LoadImage(item.image, oMenu.SkinDir)
+                
+                if (!item.pImage)
+                    return this.ShowErrorMsg(A_ThisFunc ' - Unable to load image: "' image '".', menuId)
+                
+                Gdip_DrawImage(oMenu.G, item.pImage, item.imgX, item.imgY, item.imgSize, item.imgSize)
+                Gdip_DisposeImage(item.pImage)
+                UpdateLayeredWindow(oMenu.hwnd, oMenu.hdc, 0, 0, oMenu.scaledSize, oMenu.scaledSize)
+                
+                return true
+            }
+        }
+        return this.ShowErrorMsg(A_ThisFunc ' - Item not found: "' itemText '".', menuId)
+    }
     ;=============================================================================================
 
     static GetMousePositionInfo(oMenu)
