@@ -89,6 +89,7 @@ class RadifySkinEditor {
             ['Close Menu Block', 'closeMenuBlock'],
             ['Always on Top', 'alwaysOnTop'],
             ['Activate on Show', 'activateOnShow'],
+            ['Hide Menu when focus is lost', 'hideOnLoseFocus'],
             ['Enable Tooltip', 'enableTooltip'],
             ['Enable Glow', 'enableGlow'],
             ['Auto Tooltip', 'autoTooltip'],
@@ -392,7 +393,7 @@ class RadifySkinEditor {
         this.gMain.ddl_centerRightClick := this.gMain.Add('DropDownList', 'xs+120 yp-2 w100 vcenterRightClick', this.arrRightClick)
 
         for setting in ['closeOnItemClick', 'closeOnItemRightClick', 'closeMenuBlock', 'mirrorClickToRightClick', 'enableItemText', 'itemBackgroundImageOnCenter',
-            'itemBackgroundImageOnItems', 'alwaysOnTop', 'activateOnShow']
+            'itemBackgroundImageOnItems', 'alwaysOnTop', 'activateOnShow', 'hideOnLoseFocus']
             this.gMain.cb_%setting% := this.gMain.Add('CheckBox', 'xs v' setting, ' ' this.gMain_GetDisplayName(setting))
 
         this.gMain.pic_miscInfo := this.gMain.Add('Picture', 'xs-218 ys-24 w15 h15 +0x0100', this.mIcons['iSmall'])
@@ -608,6 +609,7 @@ class RadifySkinEditor {
             ['txt_outerRingMargin', '➤ OuterRingMargin - Margin between the outermost ring and the edge of the menu (' Radify.range.outerRingMargin[1] '-' Radify.range.outerRingMargin[2] ' px).'],
             ['cb_alwaysOnTop', '➤ AlwaysOnTop - Keeps the menu always on top.'],
             ['cb_activateOnShow', '➤ ActivateOnShow - Activates menu window on show.'],
+            ['cb_hideOnLoseFocus', '➤ HideOnLoseFocus - Hides menu window when focus is lost.'],
             ['cb_enableTooltip', '➤ EnableTooltip - Enables tooltips for menu items.'],
             ['cb_enableGlow', '➤ EnableGlow - Enables glow effect on hover.'],
             ['cb_autoTooltip', '➤ AutoTooltip - Generates the tooltip text if "Tooltip" is not set, based on item text or image name.'],
@@ -891,7 +893,7 @@ class RadifySkinEditor {
 
     static gMain_SetMisc(skin, skinObj)
     {
-        for key in ['activateOnShow', 'alwaysOnTop', 'autoCenterMouse', 'autoTooltip', 'centerSize', 'closeOnItemClick',
+        for key in ['activateOnShow', 'hideOnLoseFocus', 'alwaysOnTop', 'autoCenterMouse', 'autoTooltip', 'centerSize', 'closeOnItemClick',
         'closeOnItemRightClick', 'mirrorClickToRightClick', 'enableGlow', 'enableTooltip', 'itemBackgroundImageOnCenter',
         'itemBackgroundImageOnItems', 'itemSize', 'outerRingMargin', 'outerRimWidth' , 'closeMenuBlock', 'enableItemText', 'submenuIndicatorSize']
             this.gMain[key].Value := skinObj.%key%

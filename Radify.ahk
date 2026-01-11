@@ -48,6 +48,7 @@ Class Radify {
             autoCenterMouse: true,
             alwaysOnTop: true,
             activateOnShow: false,
+            hideOnLoseFocus: false,
             autoTooltip: true,
             enableTooltip: true,
             enableGlow: true,
@@ -93,6 +94,7 @@ Class Radify {
             mirrorClickToRightClick: [0, 1],
             alwaysOnTop: [0, 1],
             activateOnShow: [0, 1],
+            hideOnLoseFocus: [0, 1],
             enableTooltip: [0, 1],
             enableGlow: [0, 1],
             autoTooltip: [0, 1],
@@ -1293,6 +1295,12 @@ Class Radify {
 
     ;=============================================================================================
 
+    static OnLoseFocus(oMenu, wParam, lParam, msg, hwnd) {
+        SetTimer(
+            (*) => (WinExist('A') != oMenu.hwnd ) && this.Close(oMenu.id), 
+            -100
+        )
+    }
     static OnClick(oMenu, clickName, wParam, lParam, msg, hwnd)
     {
         if (hwnd != oMenu.hwnd)
@@ -1425,6 +1433,10 @@ Class Radify {
     {
         oMenu.boundFuncOnClick := this.OnClick.Bind(this, oMenu, 'click')
         oMenu.boundFuncOnRightClick := this.OnClick.Bind(this, oMenu, 'rightClick')
+        if (oMenu.options.hideOnLoseFocus) {
+            oMenu.boundFuncWmActivate := this.OnLoseFocus.Bind(this, oMenu)
+            OnMessage(0x0006, oMenu.boundFuncWmActivate)  ; WM_ACTIVATE        
+        }
         OnMessage(0x0201, oMenu.boundFuncOnClick) ; WM_LBUTTONDOWN
         OnMessage(0x0203, oMenu.boundFuncOnClick) ; WM_LBUTTONDBLCLK
         OnMessage(0x0204, oMenu.boundFuncOnRightClick) ; WM_RBUTTONDOWN
@@ -1443,6 +1455,8 @@ Class Radify {
             OnMessage(0x0204, oMenu.boundFuncOnRightClick, 0)
         if (oMenu.HasOwnProp('boundFuncOnRightClick'))
             OnMessage(0x0206, oMenu.boundFuncOnRightClick, 0)
+        if (oMenu.HasOwnProp('boundFuncWmActivate'))
+            OnMessage(0x0006, oMenu.boundFuncWmActivate, 0)
     }
 
     ;=============================================================================================
