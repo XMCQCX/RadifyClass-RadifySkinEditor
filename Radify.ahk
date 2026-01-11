@@ -48,6 +48,7 @@ Class Radify {
             autoCenterMouse: true,
             alwaysOnTop: true,
             activateOnShow: false,
+            hideOnLoseFocus: false,
             autoTooltip: true,
             enableTooltip: true,
             enableGlow: true,
@@ -93,6 +94,7 @@ Class Radify {
             mirrorClickToRightClick: [0, 1],
             alwaysOnTop: [0, 1],
             activateOnShow: [0, 1],
+            hideOnLoseFocus: [0, 1],
             enableTooltip: [0, 1],
             enableGlow: [0, 1],
             autoTooltip: [0, 1],
@@ -492,7 +494,7 @@ Class Radify {
             ring := {items: [], radius: 0}
             itemCount := ringItems.Length
             radius := oMenu.options.centerSize / 2 + oMenu.options.itemSize / 2 +
-                      oMenu.options.itemSize * (ringIdx - 1) * oMenu.options.radiusScale
+                      oMenu.options.itemSize * (ringIdx - 1) * oMenu.options.radiusScale + itemCount * 2
             ring.radius := Round(radius)
             ringValidItemCount := 0
 
@@ -706,10 +708,10 @@ Class Radify {
                     item.pImage := this.LoadImage(item.image, oMenu.skinDir)
 
                     if (item.pImage) {
-                        imgSize := Round(item.itemSize * item.itemImageScale)
-                        imgX := Round(absX + (item.itemSize - imgSize) / 2)
-                        imgY := Round(absY + item.itemImageYRatio * (item.itemSize - imgSize))
-                        Gdip_DrawImage(oMenu.G, item.pImage, imgX, imgY, imgSize, imgSize)
+                        item.imgSize := Round(item.itemSize * item.itemImageScale)
+                        item.imgX := Round(absX + (item.itemSize - item.imgSize) / 2)
+                        item.imgY := Round(absY + item.itemImageYRatio * (item.itemSize - item.imgSize))
+                        Gdip_DrawImage(oMenu.G, item.pImage, item.imgX, item.imgY, item.imgSize, item.imgSize)
                         Gdip_DisposeImage(item.pImage)
                     }
                 }
@@ -965,7 +967,39 @@ Class Radify {
         }
         return false
     }
-
+		
+	/*********************************************************************************************
+    * Updates image for existing menu item.
+    * @param {string} menuId - Unique identifier of the menu.
+    * @param {string} itemText - The value of the `text` property for the item object that needs to be found in the menu.
+    * @param {string} image - Full path to the new image or image filename, see {@link SetImageDir}.
+    */
+    static SetItemImage(menuId, itemText, image) {    
+        if (!this.menus.HasOwnProp(menuId))
+            return this.ShowErrorMsg(A_ThisFunc ' - Menu not found.', menuId)
+        
+        oMenu := this.menus.%menuId%
+        
+        for ring in oMenu.rings {
+            for item in ring.items {
+                if (item.text != itemText)
+                    continue
+                
+                item.image  := image
+                item.pImage := this.LoadImage(item.image, oMenu.SkinDir)
+                
+                if (!item.pImage)
+                    return this.ShowErrorMsg(A_ThisFunc ' - Unable to load image: "' image '".', menuId)
+                
+                Gdip_DrawImage(oMenu.G, item.pImage, item.imgX, item.imgY, item.imgSize, item.imgSize)
+                Gdip_DisposeImage(item.pImage)
+                UpdateLayeredWindow(oMenu.hwnd, oMenu.hdc, 0, 0, oMenu.scaledSize, oMenu.scaledSize)
+                
+                return true
+            }
+        }
+        return this.ShowErrorMsg(A_ThisFunc ' - Item not found: "' itemText '".', menuId)
+    }
     ;=============================================================================================
 
     static GetMousePositionInfo(oMenu)
@@ -1261,10 +1295,17 @@ Class Radify {
 
     ;=============================================================================================
 
+    static OnLoseFocus(oMenu, wParam, lParam, msg, hwnd) {
+        SetTimer(
+            (*) => (WinExist('A') != oMenu.hwnd ) && this.Close(oMenu.id), 
+            -100
+        )
+    }
+    
     static OnClick(oMenu, clickName, wParam, lParam, msg, hwnd)
     {
         if (hwnd != oMenu.hwnd)
-            return
+            return  
 
         CoordMode('Mouse', 'Screen')
         MouseGetPos(&mouseX, &mouseY)
@@ -1272,48 +1313,55 @@ Class Radify {
         relX := (mouseX - winX) / oMenu.dpiScale
         relY := (mouseY - winY) / oMenu.dpiScale
         soundPlayed := false
-
+        foundItem   := false
+        
         for (index, itemInfo in oMenu.itemList) {
-            if (this.IsPointInCircularZone(itemInfo, relX, relY)) {
-                if (itemInfo.isCenter) {
-                    if (oMenu.parentMenuId && clickName == 'click')
-                        return this.ToggleSubmenu(this.menus.%oMenu.parentMenuId%, oMenu.id, 0, 0)
+            if !(this.IsPointInCircularZone(itemInfo, relX, relY))
+                continue
+                
+            if (itemInfo.isCenter) {
+                if (oMenu.parentMenuId && clickName == 'click')
+                    return this.ToggleSubmenu(this.menus.%oMenu.parentMenuId%, oMenu.id, 0, 0)
 
-                    clickName := 'center' clickName
-                    action := oMenu.options.%clickName%
-                    close := (action = 'close')
-                } else {
-                    ring := oMenu.rings[itemInfo.ringIdx]
-                    item := ring.items[itemInfo.itemIdx]
+                clickName := 'center' clickName
+                action := oMenu.options.%clickName%
+                close  := (action = 'close')
+            } else {
+                ring := oMenu.rings[itemInfo.ringIdx]
+                item := ring.items[itemInfo.itemIdx]
 
-                    if (clickName == 'click') {
-                        switch {
-                            case GetKeyState('Shift', 'P'):
-                                result := GetActionAndClose(item, 'shiftClick')
-                            case GetKeyState('Alt', 'P'):
-                                result := GetActionAndClose(item, 'altClick')
-                            case GetKeyState('Ctrl', 'P'):
-                                result := (item.ctrlClick ? GetActionAndClose(item, 'ctrlClick') : {action: item.click, close: false})
-                            default:
-                                if (item.submenuId)
-                                    return this.ToggleSubmenu(oMenu, item.submenuId, item.absX, item.absY)
-                                result := GetActionAndClose(item, 'click')
+                if (clickName == 'click') {
+                    if GetKeyState('Shift', 'P')
+                        result := GetActionAndClose(item, 'shiftClick')
+                    else if GetKeyState('Alt', 'P')
+                        result := GetActionAndClose(item, 'altClick')
+                    else if GetKeyState('Ctrl', 'P')
+                        result := GetActionAndClose(item, 'ctrlClick')
+                    else {
+                        if (item.submenuId) {                            
+                            return this.ToggleSubmenu(oMenu, item.submenuId, item.absX, item.absY)
                         }
-                    } else result := GetActionAndClose(item, 'rightClick')
+ 
+                        result := GetActionAndClose(item, 'click')                        
+                    }
+                } else {
+                    result := GetActionAndClose(item, 'rightClick')
+                }    
 
-                    action := result.action
-                    close := result.close
+                action := result.action
+                close  := result.close
 
-                    if (item.soundOnSelect && action)
-                        this.PlaySound(item.soundOnSelect), soundPlayed := true
+                if (item.soundOnSelect && action) {
+                    this.PlaySound(item.soundOnSelect) 
+                    soundPlayed := true                        
                 }
-
-                foundItem := true
-                break
             }
+
+            foundItem := true
+            break
         }
 
-        if (!IsSet(foundItem)) {
+        if !(foundItem && action) {
             clickName := 'menu' clickName
             action := oMenu.options.%clickName%
             close := (Type(action) == 'String' && action = 'close')
@@ -1341,20 +1389,24 @@ Class Radify {
         ;==============================================
 
         GetActionAndClose(item, clickType) {
-            action := item.%clickType%
-            closeDefault := ((clickType = 'rightClick') ? item.closeOnItemRightClick : item.closeOnItemClick)
+            if !(action := item.%clickType%)
+                 action := item.click
+            
+            close  := (clickType = 'rightClick'
+                   ? item.closeOnItemRightClick 
+                   : item.closeOnItemClick)
+            
+            if (Type(action) != 'String') 
+                return {action: action, close: close}
 
-            if (Type(action) == 'String') {
-                switch action, false {
-                    case 'close':
-                        return {action: action, close: true}
-                    case 'closeMenu', 'drag':
-                        return {action: action, close: false}
-                    default:
-                        return {action: action, close: closeDefault}
-                }
-            } else
-                return {action: action, close: closeDefault}
+            switch action, false {  ; case-insens. property name
+                case 'close':
+                    return {action: action, close: true}
+                case 'closeMenu', 'drag':
+                    return {action: action, close: false}     
+                default:
+                    return {action: action, close: close}
+            }               
         }
     }
 
@@ -1393,6 +1445,10 @@ Class Radify {
     {
         oMenu.boundFuncOnClick := this.OnClick.Bind(this, oMenu, 'click')
         oMenu.boundFuncOnRightClick := this.OnClick.Bind(this, oMenu, 'rightClick')
+        if (oMenu.options.hideOnLoseFocus) {
+            oMenu.boundFuncWmActivate := this.OnLoseFocus.Bind(this, oMenu)
+            OnMessage(0x0006, oMenu.boundFuncWmActivate)  ; WM_ACTIVATE        
+        }
         OnMessage(0x0201, oMenu.boundFuncOnClick) ; WM_LBUTTONDOWN
         OnMessage(0x0203, oMenu.boundFuncOnClick) ; WM_LBUTTONDBLCLK
         OnMessage(0x0204, oMenu.boundFuncOnRightClick) ; WM_RBUTTONDOWN
@@ -1411,6 +1467,8 @@ Class Radify {
             OnMessage(0x0204, oMenu.boundFuncOnRightClick, 0)
         if (oMenu.HasOwnProp('boundFuncOnRightClick'))
             OnMessage(0x0206, oMenu.boundFuncOnRightClick, 0)
+        if (oMenu.HasOwnProp('boundFuncWmActivate'))
+            OnMessage(0x0006, oMenu.boundFuncWmActivate, 0)
     }
 
     ;=============================================================================================
