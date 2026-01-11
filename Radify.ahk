@@ -492,7 +492,7 @@ Class Radify {
             ring := {items: [], radius: 0}
             itemCount := ringItems.Length
             radius := oMenu.options.centerSize / 2 + oMenu.options.itemSize / 2 +
-                      oMenu.options.itemSize * (ringIdx - 1) * oMenu.options.radiusScale
+                      oMenu.options.itemSize * (ringIdx - 1) * oMenu.options.radiusScale + itemCount * 2
             ring.radius := Round(radius)
             ringValidItemCount := 0
 
