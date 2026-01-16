@@ -6,8 +6,8 @@
 
 /*********************************************************************************************
  * @file Radify Menus.ahk
- * @version 1.1.0
- * @date 2025-08-28
+ * @version 1.1.1
+ * @date 2026-01-16
  * @see {@link https://github.com/XMCQCX/RadifyClass-RadifySkinEditor GitHub}
  * @see {@link https://www.autohotkey.com/boards/viewtopic.php?f=83&t=138484 AHK Forum}
  ********************************************************************************************/
@@ -236,6 +236,11 @@ settingsMenu := [
         {image: 'installedApps-settings-app.png', click: (*) => Run('ms-settings:appsfeatures')},
         {image: 'programs-features-control-panel.png', click: (*) => Run('appwiz.cpl')},
         {image: 'system.png', click: (*) => Run('SystemPropertiesAdvanced.exe'), tooltip: 'System Properties > Advanced'},
+        {
+            image: 'system-environment-variables.png',
+            click: (*) => Run('rundll32.exe sysdm.cpl,EditEnvironmentVariables'),
+            tooltip: 'System Properties > Advanced > Environment Variables'
+        },
 		{image: 'network-connections.png', click: (*) => Run('shell:::{7007ACC7-3202-11D1-AAD2-00805FC1270E}')},
         {image: 'windows-defender.png', click: (*) => Run('explorer.exe windowsdefender:')},
         {image: 'folder-options.png', click: (*) => Run('shell:::{6DFD7C5C-2451-11d3-A299-00C04F8EF6AF}')},
@@ -714,7 +719,6 @@ GetFolderPath(folderName) {
         pictures: '{33E28130-4E1E-4676-835A-98395C3BC3BB}',
         documents: '{FDD39AD0-238F-46AF-ADB4-6C85480369C7}',
         desktop: '{B4BFCC3A-DB2C-424C-B029-7FE99A87C641}',
-        recyclebin: '{B7534046-3ECB-4C18-BE4E-64CD4CB7D6AC}',
         recent: '{AE50C081-EBD2-438A-8655-8A092E34987A}'
     }
 
