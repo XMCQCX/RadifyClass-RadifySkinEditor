@@ -1,9 +1,10 @@
 /*********************************************************************************************
- * Radify - A radial menu launcher with multi-ring layouts, submenus and interactive items.
+ * Radify - A radial menu launcher with multi-ring layouts, submenus, and interactive items.
+ *
  * @author Martin Chartier (XMCQCX)
- * @version 1.1.0
+ * @version 1.2.0
+ * @date 2026-01-16
  * @license MIT
- * @date 2025-08-28
  * @see {@link https://github.com/XMCQCX/RadifyClass-RadifySkinEditor GitHub}
  * @see {@link https://www.autohotkey.com/boards/viewtopic.php?f=83&t=138484 AHK Forum}
  ********************************************************************************************/
@@ -11,47 +12,48 @@ Class Radify {
     static __New()
     {
         this.menus := {}
-        this.scriptName := 'Radify'
-        this.isValidConfiguration := true
+        this.className := this.Prototype.__Class
         this.lastMenuOpenInfo := {mouseX: unset, mouseY: unset, hwndUnderMouse: unset}
         this.PI := 3.141592653589793
 
         this.defaults := {
             skin: 'AstroGold',
-            itemSize: 70,
-            centerSize: 50,
-            centerImageScale: 0.5,
-            radiusScale: 0.85,
-            itemImageScale: 0.5,
-            itemImageYRatio: 0.5,
+            itemGlowImage: 'ItemGlow.png',
+            menuOuterRimImage: 'MenuOuterRim.png',
             menuBackgroundImage: 'MenuBack.png',
             itemBackgroundImage: 'ItemBack.png',
-            menuOuterRimImage: 'MenuOuterRim.png',
             centerBackgroundImage: 'ItemBack.png',
-            itemGlowImage: 'ItemGlow.png',
-            submenuIndicatorImage: 'SubmenuIndicator.png',
             centerImage: 'CenterImage.png',
-            outerRimWidth: 6,
-            outerRingMargin: 25,
+            submenuIndicatorImage: 'SubmenuIndicator.png',
+            itemSize: 70,
+            radiusScale: 0.85,
+            centerSize: 50,
+            centerImageScale: 0.5,
+            itemImageScale: 0.5,
+            itemImageYRatio: 0.5,
             submenuIndicatorSize: 12,
             submenuIndicatorYRatio: 0.08,
+            outerRingMargin: 25,
+            outerRimWidth: 6,
             itemBackgroundImageOnCenter: false,
             itemBackgroundImageOnItems: true,
             menuClick: 'Close',
             menuRightClick: 'Close',
             centerClick: 'Drag',
             centerRightClick: 'Close',
+            mirrorClickToRightClick: false,
             closeOnItemClick: true,
             closeOnItemRightClick: true,
             closeMenuBlock: false,
-            mirrorClickToRightClick: false,
+            enableItemText: true,
+            enableGlow: true,
+            autoTooltip: true,
+            enableTooltip: true,
             autoCenterMouse: true,
             alwaysOnTop: true,
             activateOnShow: false,
-            autoTooltip: true,
-            enableTooltip: true,
-            enableGlow: true,
-            enableItemText: true,
+            fillCenterHitZone: true,
+            fillItemsHitZone: false,
             textColor: 'FFFFFF',
             textFont: 'Arial',
             textSize: 11,
@@ -61,52 +63,55 @@ Class Radify {
             textShadowOffset: 1,
             textBoxScale: 0.85,
             textYRatio: 0.5,
-            guiOptions: '-Caption +E0x80000 +E0x08000000',
-            smoothingMode: 4,
-            interpolationMode: 7,
             soundOnShow: 'None',
             soundOnClose: 'None',
             soundOnSelect: 'None',
             soundOnSubShow: 'None',
             soundOnSubClose: 'None',
+            smoothingMode: 4,
+            interpolationMode: 7,
+            guiOptions: '-Caption +E0x80000 +E0x08000000',
         }
 
         this.range := {
             itemSize: [25, 250],
+            radiusScale: [0.5, 2],
             centerSize: [25, 250],
             centerImageScale: [0, 1],
             itemImageScale: [0, 1],
             itemImageYRatio: [0, 1],
-            outerRimWidth: [0, 25],
-            outerRingMargin: [0, 75],
-            interpolationMode: [0, 7],
-            smoothingMode: [0, 4],
             submenuIndicatorSize: [5, 50],
             submenuIndicatorYRatio: [0, 1],
-            radiusScale: [0.5, 2],
-            autoCenterMouse: [0, 1],
+            outerRingMargin: [0, 75],
+            outerRimWidth: [0, 25],
             itemBackgroundImageOnCenter: [0, 1],
             itemBackgroundImageOnItems: [0, 1],
+            mirrorClickToRightClick: [0, 1],
             closeOnItemClick: [0, 1],
             closeOnItemRightClick: [0, 1],
             closeMenuBlock: [0, 1],
-            mirrorClickToRightClick: [0, 1],
+            enableItemText: [0, 1],
+            enableGlow: [0, 1],
+            enableTooltip: [0, 1],
+            autoTooltip: [0, 1],
+            autoCenterMouse: [0, 1],
             alwaysOnTop: [0, 1],
             activateOnShow: [0, 1],
-            enableTooltip: [0, 1],
-            enableGlow: [0, 1],
-            autoTooltip: [0, 1],
-            enableItemText: [0, 1],
+            fillCenterHitZone: [0, 1],
+            fillItemsHitZone: [0, 1],
             textSize: [5, 100],
             textRendering: [0, 5],
             textShadowOffset: [0, 5],
             textBoxScale: [0.5, 1],
-            textYRatio: [0, 1]
+            textYRatio: [0, 1],
+            interpolationMode: [0, 7],
+            smoothingMode: [0, 4],
         }
 
         this.generals := {
             imagesDir: 'RootDir\Images',
             soundsDir: 'RootDir\Sounds',
+            documentsDir: 'RootDir\Documents',
         }
 
         this.imageKeyToFileName := {
@@ -137,15 +142,18 @@ Class Radify {
         sourcePath := (A_IsCompiled ? A_ScriptFullPath : A_LineFile)
         SplitPath(sourcePath,, &rootDir)
         this.rootDir := rootDir
-        this.skinsDir := rootDir '\skins\'
+        this.skinsDir := rootDir '\skins'
+        this.picturesDir := this.GetFolderPath('pictures')
+        this.musicDir := this.GetFolderPath('music')
+        this.documentsDir := this.GetFolderPath('documents')
 
         if (DirExist(this.skinsDir)) {
-            Loop Files, this.skinsDir '*', 'D' {
+            Loop Files, this.skinsDir '\*', 'D' {
                 skinName := A_LoopFileName
-                skinDir := this.skinsDir skinName '\'
+                skinDir := this.skinsDir '\' skinName
                 allImagesExist := true
                 for img in this.skinRequiredImages {
-                    if (!FileExist(skinDir img)) {
+                    if (!FileExist(skinDir '\' img)) {
                         allImagesExist := false
                         break
                     }
@@ -153,15 +161,11 @@ Class Radify {
                 if (allImagesExist)
                     this.skins.%skinName% := {}
             }
-        } else {
-            this.isValidConfiguration := false
-            return this.ShowErrorMsg('Skins folder not found at:`n"' this.skinsDir '"')
-        }
+        } else
+            throw ValueError('Skins folder not found at:`n"' this.skinsDir '"', -1)
 
-        if (!ObjOwnPropCount(this.skins)) {
-            this.isValidConfiguration := false
-            return this.ShowErrorMsg('No valid skin found in skins folder:`n"' this.skinsDir '"')
-        }
+        if !ObjOwnPropCount(this.skins)
+            throw ValueError('No valid skin found in skins folder:`n"' this.skinsDir '"', -1)
 
         ;==============================================
 
@@ -169,10 +173,10 @@ Class Radify {
 
         for skin in this.skins.OwnProps() {
             this.originalSkins.%skin% := {}
-            skinDir := this.skinsDir skin '\'
+            skinDir := this.skinsDir '\' skin
 
             for key in this.imageKeyToFileName.OwnProps()
-                if (FileExist(skinDir this.imageKeyToFileName.%key%))
+                if (FileExist(skinDir '\' this.imageKeyToFileName.%key%))
                     this.originalSkins.%skin%.%key% := this.imageKeyToFileName.%key%
         }
 
@@ -199,7 +203,7 @@ Class Radify {
 
         ;==============================================
 
-        if (!this.skins.HasProp(this.defaults.skin)) {
+        if (!this.skins.HasOwnProp(this.defaults.skin)) {
             if (this.skins.HasOwnProp(this.originalDefaults.skin))
                 this.defaults.skin := this.originalDefaults.skin
             else {
@@ -235,11 +239,11 @@ Class Radify {
 
     static GetImagePaths()
     {
-        this.generals.imagesDir := this.ReplaceRootDir(this.generals.imagesDir)
-
-        this.images := {}
+        this.generals.imagesDir := this.AliasToPath(this.generals.imagesDir)
         this.arrImageExt := ['ico', 'png', 'jpeg', 'jpg', 'gif', 'bmp', 'tif']
         this.strImageExt := this.ArrayToString(this.arrImageExt, '|')
+        this.images := {}
+
         Loop Files this.generals.imagesDir '\*.*'
             if (RegExMatch(A_LoopFileExt, 'i)^(' this.strImageExt ')$'))
                 SplitPath(A_LoopFilePath, &fileName), this.images.%fileName% := A_LoopFilePath
@@ -253,44 +257,42 @@ Class Radify {
 
     static GetSoundPaths()
     {
-        this.generals.soundsDir := this.ReplaceRootDir(this.generals.soundsDir)
-
+        this.generals.soundsDir := this.AliasToPath(this.generals.soundsDir)
         this.sounds := {}
+
         for path in [A_WinDir '\Media', this.generals.soundsDir]
             Loop Files path '\*.wav'
-                SplitPath(A_LoopFilePath,,,, &fileNameNoExt), this.sounds.%fileNameNoExt% := A_LoopFilePath
+                SplitPath(A_LoopFilePath, &fileName), this.sounds.%fileName% := A_LoopFilePath
     }
 
-    /*********************************************************************************************
+    /********************************************************************************************
      * Sets the directory for images, allowing image files to be referenced by filename only.
-     * @param {string | undefined} dirPath - The directory path for images. If omitted, defaults to "rootDir\Images".
-     * Must be called before creating a menu to change the directory.
-     * The path may include the "rootDir\" prefix, which refers to the directory containing "Radify.ahk".
-     *********************************************************************************************/
-    static SetImageDir(dirPath?) => this.SetDirectory('image', dirPath?)
+     *
+     * @param {string} dirPath
+    ********************************************************************************************/
+    static SetImageDir(dirPath?) => this.SetDirectory('image', A_ThisFunc, dirPath?)
 
-    /*********************************************************************************************
+    /********************************************************************************************
      * Sets the directory for sounds, allowing sound files to be referenced by filename only.
-     * @param {string | undefined} dirPath - The directory path for sounds. If omitted, defaults to "rootDir\Sounds".
-     * Must be called before creating a menu to change the directory.
-     * The path may include the "rootDir\" prefix, which refers to the directory containing "Radify.ahk".
-     *********************************************************************************************/
-    static SetSoundDir(dirPath?) => this.SetDirectory('sound', dirPath?)
+     *
+     * @param {string} dirPath
+    ********************************************************************************************/
+    static SetSoundDir(dirPath?) => this.SetDirectory('sound', A_ThisFunc, dirPath?)
 
     ;=============================================================================================
 
-    static SetDirectory(dirType, dirPath?)
+    static SetDirectory(dirType, callerFunc, dirPath?)
     {
         if (IsSet(dirPath) && Type(dirPath) != 'String')
-            return this.ShowErrorMsg('Parameter #1 of Set' StrTitle(dirType) 'Dir requires a String. Received: ' Type(dirPath) '.')
+            throw TypeError('Parameter #1 of ' callerFunc '() requires a String, but received ' Type(dirPath) '.', -1)
 
         if (!IsSet(dirPath) || dirPath = '')
             dirPath := this.originalGenerals.%dirType%sDir
 
-        dirPath := this.ReplaceRootDir(dirPath)
+        dirPath := this.AliasToPath(dirPath)
 
         if (!DirExist(dirPath))
-            return this.ShowErrorMsg('Non-existent ' StrTitle(dirType) 's directory: "' dirPath '"')
+            throw ValueError(callerFunc '(): Directory not found:`n"' dirPath '"', -1)
 
         this.generals.%dirType%sDir := dirPath
         this.Get%dirType%Paths()
@@ -299,41 +301,41 @@ Class Radify {
 
     ;=============================================================================================
 
-    static ReplaceRootDir(dirPath)
+    static AliasToPath(dirPath)
     {
-        if (RegExMatch(dirPath, 'i)^rootDir\\'))
-            return StrReplace(dirPath, 'rootDir', this.rootDir,,, 1)
+        for value in ['rootDir', 'picturesDir', 'musicDir', 'documentsDir']
+            if (RegExMatch(dirPath, 'i)^' value))
+                return StrReplace(dirPath, value, this.%value%,,, 1)
+
         return dirPath
     }
 
     /*********************************************************************************************
      * Creates a menu with the specified ID, structure, and configuration options.
+     *
      * @param {string} menuId - Unique identifier of the menu.
-     * @param {array} menuItems - The menu structure: an array of one or more inner arrays (rings), each containing item objects.
+     * @param {array} menuItems - An array containing one or more inner arrays (rings), each containing at least one item object.
      * @param {object} options - Configuration options for the menu.
-     */
+    ********************************************************************************************/
     static CreateMenu(menuId?, menuItems?, options := {})
     {
-        if (!this.isValidConfiguration)
-            return
-
         if (!IsSet(menuId) || menuId = '')
-            return this.ShowErrorMsg('Parameter #1 of CreateMenu requires a non-empty String.')
+            throw TypeError('Parameter #1 of ' A_ThisFunc '() requires a non-empty String.', -1)
 
         if (Type(menuId) != 'String')
-            return this.ShowErrorMsg('Parameter #1 of CreateMenu requires a String. Received: ' Type(menuId) '.', menuId)
+            throw TypeError('Parameter #1 of ' A_ThisFunc '() requires a String, but received ' Type(menuId) '.', -1)
 
         if (this.menus.HasOwnProp(menuId))
-            return this.ShowErrorMsg('Parameter #1 of CreateMenu must be a unique menu ID. "' menuId '" already exists.')
+            throw ValueError('Parameter #1 of ' A_ThisFunc '() must be a unique menu ID. "' menuId '" already exists.', -1)
 
         if (!IsSet(menuItems) || Type(menuItems) != 'Array')
-            return this.ShowErrorMsg('Parameter #2 of CreateMenu requires an Array.' (IsSet(menuItems) ? ' Received: ' Type(menuItems) '.' : ''), menuId)
+            throw TypeError('Parameter #2 of ' A_ThisFunc '() requires an Array.' (IsSet(menuItems) ? ' Received: ' Type(menuItems) '.' : ''), -1)
 
         if (menuItems.Length = 0 || !this.IsArrayOfArrays(menuItems))
-            return this.ShowErrorMsg('Parameter #2 of CreateMenu requires an Array of one or more inner arrays (rings), each containing item objects.', menuId)
+            throw TypeError('Parameter #2 of ' A_ThisFunc '() requires an Array containing one or more inner arrays (rings), each containing at least one item object.', -1)
 
         if (Type(options) != 'Object')
-            return this.ShowErrorMsg('Parameter #3 of CreateMenu requires an Object. Received: ' Type(options) '.', menuId)
+            throw TypeError('Parameter #3 of ' A_ThisFunc '() requires an Object, but received ' Type(options) '.', -1)
 
         newMenuIds := []
 
@@ -365,35 +367,17 @@ Class Radify {
                     oMenu.gui.Opt('+Owner' parentMenu.hwnd)
                 }
             }
-        } catch as e
-            return this.OnMenuCreationFailure(menuId, e)
-
-        return true
+        } catch as err {
+            this.CleanupMenu(menuId)
+            throw Error(A_ThisFunc '(): Failed to create menu: "' menuId '". ' err.Message, -1)
+        }
     }
 
-    ;=============================================================================================
-
-    static ShowErrorMsg(errorMsg, menuId?)
-    {
-        errorMsg .= '`n`nDetails:'
-        errorMsg .= (IsSet(menuId) ? '`n- Menu: "' menuId '"' : '')
-        errorMsg .= '`n- Script: "' A_ScriptFullPath '"'
-        MsgBox(errorMsg, this.scriptName ' - Error', 'Iconx')
-        return false
-    }
-
-    ;=============================================================================================
-
-    static OnMenuCreationFailure(menuId, e)
-    {
-        this.CleanupMenu(menuId)
-        errorMsg := 'Failed to create menu: "' menuId '". ' e.Message '`n- Script: "' A_ScriptFullPath '"'
-        MsgBox(errorMsg, this.scriptName ' - Error', 'Iconx')
-        return false
-    }
-
-    ;=============================================================================================
-
+    /*********************************************************************************************
+     * Deletes the specified root menu and all its submenus, freeing all associated resources.
+     *
+     * @param {string} rootMenuId - Unique identifier of the root menu to delete.
+    ********************************************************************************************/
     static CleanupMenu(rootMenuId)
     {
         if (!this.menus.HasOwnProp(rootMenuId))
@@ -401,6 +385,9 @@ Class Radify {
 
         menuIdsToRemove := [rootMenuId]
         oMenu := this.menus.%rootMenuId%
+
+        if (oMenu.parentMenuId)
+            throw ValueError(A_ThisFunc '() can only delete root menus. "' rootMenuId '" is a submenu.', -1)
 
         for submenuId in oMenu.submenuIds
             menuIdsToRemove.Push(submenuId)
@@ -416,7 +403,7 @@ Class Radify {
 
     ;=============================================================================================
 
-    static ProcessMenu(menuId, menuItems, options, newMenuIds, parentMenuId := unset)
+    static ProcessMenu(menuId, menuItems, options, newMenuIds, parentMenuId := 0)
     {
         oMenu := {
             id: menuId,
@@ -425,6 +412,7 @@ Class Radify {
             rings: [],
             itemList: [],
             submenuIds: [],
+            parentMenuId: parentMenuId,
             maxExtent: 0,
             prevHoveredIndex: 0,
             currentTooltip: 0,
@@ -433,7 +421,6 @@ Class Radify {
             isFullyInitialized: false
         }
 
-        oMenu.parentMenuId := (parentMenuId ?? 0)
         this.menus.%menuId% := oMenu
         newMenuIds.Push(menuId)
         this.MergeMenuOptions(oMenu, options)
@@ -475,7 +462,7 @@ Class Radify {
             if (oMenu.options.%key% = 'none')
                 oMenu.options.%key% := ''
 
-        oMenu.skinDir := this.skinsDir oMenu.options.skin '\'
+        oMenu.skinDir := this.skinsDir '\' oMenu.options.skin
     }
 
     ;=============================================================================================
@@ -485,8 +472,8 @@ Class Radify {
         validRingCount := 0
         validItemCount := 0
 
-        for ringIdx, ringItems in menuItems {
-            if (!Type(ringItems) = 'Array' || ringItems.Length = 0)
+        for (ringIdx, ringItems in menuItems) {
+            if (Type(ringItems) != 'Array' || ringItems.Length = 0)
                 continue
 
             ring := {items: [], radius: 0}
@@ -496,8 +483,8 @@ Class Radify {
             ring.radius := Round(radius)
             ringValidItemCount := 0
 
-            for itemIdx, menuItem in ringItems {
-                item := this.CreateMenuItem(oMenu, menuItem, menuId, ringIdx, itemIdx, itemCount, radius, newMenuIds)
+            for (itemIdx, menuItem in ringItems) {
+                item := this.CreateMenuItem(oMenu, menuItem, menuId, ringIdx, itemIdx, itemCount, ring.radius, newMenuIds)
                 ring.items.Push(item)
                 ringValidItemCount++
                 validItemCount++
@@ -512,7 +499,8 @@ Class Radify {
         }
 
         if (validRingCount = 0 || validItemCount = 0)
-            throw Error((parentMenuId ? 'One of its submenus' : 'The menu') ' contains no valid rings or items.`n`nDetails:`n- Menu: "' menuId '"')
+            throw ValueError((parentMenuId ? 'Submenu' : 'Menu') ' contains no valid rings or items.`n`n'
+                        'Details:`n  - ' (parentMenuId ? 'Submenu' : 'Menu') ': "' menuId '"', -1)
     }
 
     ;=============================================================================================
@@ -526,7 +514,8 @@ Class Radify {
         }
 
         if (Type(menuItem) != 'Object')
-            throw Error('Menu item requires an Object. Received: ' Type(menuItem) '.`n`nDetails:`n- Menu: "' menuId '"`n- Ring: ' ringIdx ', Item: ' itemIdx)
+            throw TypeError('Menu item requires an Object, but received ' Type(menuItem) '.`n`n'
+                    'Details:`n  - ' (oMenu.parentMenuId ? 'Submenu' : 'Menu') ': "' menuId '" (Ring: ' ringIdx ', Item: ' itemIdx ')', -1)
 
         if (ObjOwnPropCount(menuItem) = 0) {
             item.isEmpty := true
@@ -573,16 +562,18 @@ Class Radify {
         item.relY := Round(radius * Sin(angle))
 
         if (menuItem.HasOwnProp('submenu')) {
-            arrSubmenu := menuItem.submenu
+            submenuItems := menuItem.submenu
             submenuId := menuId '_submenu_' ringIdx '_' itemIdx
             item.submenuId := submenuId
             oMenu.submenuIds.Push(submenuId)
 
-            if (Type(arrSubmenu) != 'Array')
-                throw Error('The Submenu property requires an Array. Received: ' Type(arrSubmenu) '.`n`nDetails:`n- Menu: "' menuId '"`n- Ring: ' ringIdx ', Item: ' itemIdx)
+            if (Type(submenuItems) != 'Array')
+                throw TypeError('The Submenu property requires an Array, but received ' Type(submenuItems) '.`n`n'
+                        'Details:`n  - ' (oMenu.parentMenuId ? 'Submenu' : 'Menu') ': "' menuId '" (Ring: ' ringIdx ', Item: ' itemIdx ')', -1)
 
-            if (arrSubmenu.Length = 0 || !this.IsArrayOfArrays(arrSubmenu))
-                throw Error('The Submenu property requires an Array of one or more inner arrays (rings), each containing item objects.`n`nDetails:`n- Menu: "' menuId '"`n- Ring: ' ringIdx ', Item: ' itemIdx)
+            if (submenuItems.Length = 0 || !this.IsArrayOfArrays(submenuItems))
+                throw TypeError('The Submenu property requires an Array containing one or more inner arrays (rings), each containing at least one item object.`n`n'
+                        'Details:`n  - ' (oMenu.parentMenuId ? 'Submenu' : 'Menu') ': "' menuId '" (Ring: ' ringIdx ', Item: ' itemIdx ')', -1)
 
             submenuOptions := {}
 
@@ -598,7 +589,7 @@ Class Radify {
 
             submenuOptions.soundOnShow := (submenuOptions.HasOwnProp('soundOnShow') ? submenuOptions.soundOnShow : oMenu.options.soundOnSubShow)
             submenuOptions.soundOnClose := (submenuOptions.HasOwnProp('soundOnClose') ? submenuOptions.soundOnClose : oMenu.options.soundOnSubClose)
-            this.ProcessMenu(submenuId, arrSubmenu, submenuOptions, newMenuIds, menuId)
+            this.ProcessMenu(submenuId, submenuItems, submenuOptions, newMenuIds, menuId)
         }
 
         return item
@@ -609,14 +600,15 @@ Class Radify {
     static LoadSkinImages(oMenu)
     {
         validBitmapCount := 0
+
         for key in this.imageKeyToFileName.OwnProps()
             if (oMenu.p%key% := this.LoadImage(oMenu.options.%key%, oMenu.skinDir))
                 validBitmapCount++
 
         if (validBitmapCount = 0)
-            throw Error('Unable to load images for skin: "' oMenu.options.skin '").`n`n'
-                      . 'Possible reasons:`n1) GDI+ is included but not initialized. Make sure Gdip_Startup() has been called.`n'
-                      . '2) Skin directory does not contain valid image files:`n"' oMenu.skinDir '".`n`nDetails:`n- Menu: "' oMenu.id '"')
+            throw Error('Unable to load images for skin: "' oMenu.options.skin '".`n`nPossible reasons:`n'
+                    '  1) GDI+ is included but not initialized. Make sure Gdip_Startup() has been called.`n'
+                    '  2) Skin directory does not contain valid image files:`n     "' oMenu.skinDir '"', -1)
     }
 
     ;=============================================================================================
@@ -663,6 +655,8 @@ Class Radify {
         centerX := Round(centerPoint - centerSize / 2)
         centerY := Round(centerPoint - centerSize / 2)
 
+        hasCenterBgImage := false
+
         if (oMenu.pCenterBackgroundImage && oMenu.options.itemBackgroundImageOnCenter)
             if (Gdip_DrawImage(oMenu.G, oMenu.pCenterBackgroundImage, centerX, centerY, centerSize, centerSize) = 0)
                 hasCenterBgImage := true
@@ -671,13 +665,11 @@ Class Radify {
             imgSize := Round(centerSize * oMenu.options.centerImageScale)
             imgX := Round(centerX + (centerSize - imgSize) / 2)
             imgY := Round(centerY + (centerSize - imgSize) / 2)
-
-            if (Gdip_DrawImage(oMenu.G, oMenu.pCenterImage, imgX, imgY, imgSize, imgSize) = 0)
-                hasCenterImage := true
+            Gdip_DrawImage(oMenu.G, oMenu.pCenterImage, imgX, imgY, imgSize, imgSize)
         }
 
-        ; If no background image is drawn in the center, fill it with a transparent circle to ensure the region detects clicks.
-        if (!IsSet(hasCenterBgImage)) {
+        ; If no center background image is drawn, fill a transparent circle to ensure reliable mouse interaction within the center area
+        if (oMenu.options.fillCenterHitZone && !hasCenterBgImage) {
             pBrush := Gdip_BrushCreateSolid(0x01000000)
             Gdip_FillEllipse(oMenu.G, pBrush, centerX, centerY, centerSize, centerSize)
             Gdip_DeleteBrush(pBrush)
@@ -695,23 +687,29 @@ Class Radify {
                 else
                     pItemBackgroundImage := this.LoadImage(item.itemBackgroundImage, oMenu.skinDir)
 
+                hasItemBgImage := false
+
                 if (pItemBackgroundImage && oMenu.options.itemBackgroundImageOnItems) {
-                    Gdip_DrawImage(oMenu.G, pItemBackgroundImage, absX, absY, item.itemSize, item.itemSize)
+                    if (Gdip_DrawImage(oMenu.G, pItemBackgroundImage, absX, absY, item.itemSize, item.itemSize) = 0)
+                        hasItemBgImage := true
 
                     if (item.itemBackgroundImage != oMenu.options.itemBackgroundImage)
                         Gdip_DisposeImage(pItemBackgroundImage)
                 }
 
-                if (item.image) {
-                    item.pImage := this.LoadImage(item.image, oMenu.skinDir)
+                ; If no item background image is drawn, fill a transparent circle to ensure reliable mouse interaction within the item area
+                if (oMenu.options.fillItemsHitZone && !hasItemBgImage) {
+                    pBrush := Gdip_BrushCreateSolid(0x01000000)
+                    Gdip_FillEllipse(oMenu.G, pBrush, absX, absY, item.itemSize, item.itemSize)
+                    Gdip_DeleteBrush(pBrush)
+                }
 
-                    if (item.pImage) {
-                        imgSize := Round(item.itemSize * item.itemImageScale)
-                        imgX := Round(absX + (item.itemSize - imgSize) / 2)
-                        imgY := Round(absY + item.itemImageYRatio * (item.itemSize - imgSize))
-                        Gdip_DrawImage(oMenu.G, item.pImage, imgX, imgY, imgSize, imgSize)
-                        Gdip_DisposeImage(item.pImage)
-                    }
+                if (item.image && (item.pImage := this.LoadImage(item.image, oMenu.skinDir))) {
+                    item.imgSize := Round(item.itemSize * item.itemImageScale)
+                    item.imgX := Round(absX + (item.itemSize - item.imgSize) / 2)
+                    item.imgY := Round(absY + item.itemImageYRatio * (item.itemSize - item.imgSize))
+                    Gdip_DrawImage(oMenu.G, item.pImage, item.imgX, item.imgY, item.imgSize, item.imgSize)
+                    Gdip_DisposeImage(item.pImage)
                 }
 
                 if (item.submenuId) {
@@ -733,43 +731,33 @@ Class Radify {
                 if (item.enableItemText && item.text) {
                     textBoxWidth := Round(item.itemSize * item.textBoxScale)
                     textBoxHeight := Round(item.itemSize * item.textBoxScale)
-                    argbColor := 'ff' item.textColor
-                    argbShadowColor := 'ff' item.textShadowColor
                     textBoxX := Round(absX + (item.itemSize - textBoxWidth) / 2)
-
                     hFamily := Gdip_FontFamilyCreate(item.textFont)
                     hFont := Gdip_FontCreate(hFamily, item.textSize, 0)
                     hFormat := Gdip_StringFormatCreate(0x4000)
                     Gdip_SetStringFormatAlign(hFormat, 1)
                     Gdip_SetTextRenderingHint(oMenu.G, item.textRendering)
                     CreateRectF(&RC, 0, 0, textBoxWidth, textBoxHeight)
-                    ReturnRC := Gdip_MeasureString(oMenu.G, item.text, hFont, hFormat, &RC)
-                    textHeight := StrSplit(ReturnRC, '|')[4]
-
+                    returnRC := Gdip_MeasureString(oMenu.G, item.text, hFont, hFormat, &RC)
+                    textHeight := StrSplit(returnRC, '|')[4]
                     textBoxY := Round(absY + (item.itemSize - textHeight) * item.textYRatio)
-                    textOptionsStr := 'x' textBoxX ' y' textBoxY ' w' textBoxWidth ' h' textBoxHeight ' Center '
-                    textOptionsStr .= 'c' argbColor
-                    textOptionsStr .= ' s' item.textSize
-                    textOptionsStr .= ' r' item.textRendering
+                    argbColor := 'ff' item.textColor
 
-                    if (item.textFontOptions)
-                        textOptionsStr .= ' ' item.textFontOptions
+                    textOptions := 'x' textBoxX ' y' textBoxY ' w' textBoxWidth ' h' textBoxHeight ' Center c' argbColor
+                        . ' s' item.textSize ' r' item.textRendering ' ' item.textFontOptions
 
                     if (item.textShadowOffset > 0) {
                         shadowX := textBoxX + item.textShadowOffset
                         shadowY := textBoxY + item.textShadowOffset
-                        shadowOptions := 'x' shadowX ' y' shadowY ' w' textBoxWidth ' h' textBoxHeight ' Center '
-                        shadowOptions .= 'c' argbShadowColor
-                        shadowOptions .= ' s' item.textSize
-                        shadowOptions .= ' r' item.textRendering
+                        argbShadowColor := 'ff' item.textShadowColor
 
-                        if (item.textFontOptions)
-                            shadowOptions .= ' ' item.textFontOptions
+                        shadowOptions := 'x' shadowX ' y' shadowY ' w' textBoxWidth ' h' textBoxHeight ' Center c' argbShadowColor
+                            . ' s' item.textSize ' r' item.textRendering ' ' item.textFontOptions
 
                         Gdip_TextToGraphics(oMenu.G, item.text, shadowOptions, item.textFont, textBoxWidth, textBoxHeight)
                     }
 
-                    Gdip_TextToGraphics(oMenu.G, item.text, textOptionsStr, item.textFont, textBoxWidth, textBoxHeight)
+                    Gdip_TextToGraphics(oMenu.G, item.text, textOptions, item.textFont, textBoxWidth, textBoxHeight)
                     Gdip_DeleteStringFormat(hFormat)
                     Gdip_DeleteFont(hFont)
                     Gdip_DeleteFontFamily(hFamily)
@@ -786,7 +774,6 @@ Class Radify {
             this.CreateGlowGui(oMenu)
 
         this.DisposeMenuSkinImages(oMenu)
-        return oMenu
     }
 
     ;=============================================================================================
@@ -822,8 +809,8 @@ Class Radify {
         if (ext && RegExMatch(ext, 'i)^(exe|dll|cpl)$'))
             image .= '|icon1'
 
-        if (FileExist(skinDir image))
-            return Gdip_CreateBitmapFromFile(skinDir image)
+        if (FileExist(skinDir '\' image))
+            return Gdip_CreateBitmapFromFile(skinDir '\' image)
 
         if (FileExist(image))
             return Gdip_CreateBitmapFromFile(image)
@@ -846,6 +833,9 @@ Class Radify {
         if (this.isHBITMAP(image))
             return Gdip_CreateBitmapFromHBITMAP(image)
 
+        if (this.isGdipBitmap(image))
+            return image
+
         return false
     }
 
@@ -855,6 +845,7 @@ Class Radify {
     {
         if (RegExMatch(image, 'i)^(.+?\.(?:dll|exe|cpl))\|icon(\d+)$', &m) && FileExist(m[1]))
             return [m[1], m[2]]
+
         return false
     }
 
@@ -867,6 +858,17 @@ Class Radify {
 
     ;=============================================================================================
 
+    static isHICON(handle)
+    {
+        if (!IsInteger(handle) || handle = 0)
+            return false
+
+        iconInfo := Buffer(32 + A_PtrSize * 3, 0)
+        return !!DllCall('GetIconInfo', 'Ptr', handle, 'Ptr', iconInfo)
+    }
+
+    ;=============================================================================================
+
     static isHBITMAP(handle)
     {
         return IsInteger(handle) && handle != 0 && DllCall('GetObjectType', 'Ptr', handle) == 7
@@ -874,12 +876,17 @@ Class Radify {
 
     ;=============================================================================================
 
-    static isHICON(handle)
+    static isGdipBitmap(handle)
     {
         if (!IsInteger(handle) || handle = 0)
             return false
-        iconInfo := Buffer(32 + A_PtrSize * 3, 0)
-        return !!DllCall('GetIconInfo', 'Ptr', handle, 'Ptr', iconInfo)
+
+        try {
+            type := Buffer(4, 0)
+            result := DllCall('gdiplus\GdipGetImageType', 'Ptr', handle, 'Ptr', type.Ptr)
+            return (result = 0 && NumGet(type, 0, 'Int') = 1) ; 1 = ImageTypeBitmap
+        } catch
+            return false
     }
 
     ;=============================================================================================
@@ -902,6 +909,7 @@ Class Radify {
             centerX: centerPoint,
             centerY: centerPoint
         }
+
         oMenu.itemList.Push(centerInfo)
 
         for ringIdx, ring in oMenu.rings {
@@ -912,6 +920,7 @@ Class Radify {
                 item.absY := Round(centerPoint + item.relY - item.itemSize / 2)
                 item.itemClickZoneSize := item.itemSize
                 itemClickRadius := item.itemSize / 2
+
                 itemInfo := {
                     isCenter: false,
                     ringIdx: ringIdx,
@@ -922,11 +931,12 @@ Class Radify {
                     centerX: centerPoint + item.relX,
                     centerY: centerPoint + item.relY
                 }
+
                 oMenu.itemList.Push(itemInfo)
             }
         }
 
-        ; Process items from last to first created to avoid hitbox conflicts due to overlapping.
+        ; Reverse the item order from last-drawn to first-drawn to avoid hitbox conflicts when items overlap.
         oMenu.itemList := this.ArrayReverse(oMenu.itemList)
     }
 
@@ -935,8 +945,10 @@ Class Radify {
     static IsPointInCircularZone(itemInfo, relX, relY)
     {
         distanceSquared := (relX - itemInfo.centerX)**2 + (relY - itemInfo.centerY)**2
+
         if (distanceSquared > itemInfo.radiusSquared)
             return false
+
         return true
     }
 
@@ -963,6 +975,7 @@ Class Radify {
                 }
             }
         }
+
         return false
     }
 
@@ -1022,7 +1035,7 @@ Class Radify {
     /*********************************************************************************************
      * @credits nperovic
      * @see {@link https://github.com/nperovic/ToolTipEx GitHub}
-     */
+    ********************************************************************************************/
     static UpdateTooltipPosition(oMenu, ttHwnd)
     {
         if (!WinExist(ttHwnd))
@@ -1076,10 +1089,11 @@ Class Radify {
      * @credits lexikos, nperovic
      * @see {@link https://www.autohotkey.com/boards/viewtopic.php?t=103459 AHK Forum}
      * @see {@link https://github.com/nperovic/ToolTipEx GitHub}
-     */
+    ********************************************************************************************/
     static CalculatePopupWindowPosition(hwnd, &newX, &newY)
     {
         static flags := (VerCompare(A_OSVersion, '6.2') < 0 ? 0 : 0x10000)
+
         try {
             winRect := Buffer(16, 0)
             DllCall('GetClientRect', 'Ptr', hwnd, 'Ptr', winRect)
@@ -1095,6 +1109,7 @@ Class Radify {
             newY := NumGet(outRect, 4, 'Int')
             return true
         }
+
         return false
     }
 
@@ -1104,26 +1119,30 @@ Class Radify {
     {
         if (!sound)
             return
+
         if (this.sounds.HasOwnProp(sound))
             sound := this.sounds.%sound%
+
         if (FileExist(sound))
             try this.PlayWavConcurrent(sound)
     }
 
     /*********************************************************************************************
-     * Shows the menu at the current mouse position.
+     * Shows the menu.
+     *
      * @param {string} menuId - Unique identifier of the menu.
      * @param {boolean} autoCenterMouse - Center mouse cursor when showing menu.
-     */
+    ********************************************************************************************/
     static Show(menuId, autoCenterMouse?)
     {
         if (!this.menus.HasOwnProp(menuId))
-            return this.ShowErrorMsg(A_ThisFunc ' - Menu not found: "' menuId '".')
+            throw ValueError(A_ThisFunc '(): Menu not found: "' menuId '".', -1)
 
         oMenu := this.menus.%menuId%
 
         if (!oMenu.isFullyInitialized)
-            return this.ShowErrorMsg(A_ThisFunc ' - Menu not fully initialized: "' menuId '".')
+            return MsgBox(A_ThisFunc '(): Menu not fully initialized: "' menuId '". Wait for menu creation to complete.',
+                    this.className ' - Warning', 'Icon!')
 
         if (DllCall('User32.dll\IsWindowVisible', 'ptr', oMenu.hwnd))
             this.Close(menuId, true)
@@ -1167,9 +1186,10 @@ Class Radify {
 
     /*********************************************************************************************
      * Closes the entire menu tree of the specified menu.
+     *
      * @param {string} menuId - Unique identifier of the menu.
      * @param {boolean} suppressSound - Suppresses the menu close sound.
-     */
+    ********************************************************************************************/
     static Close(menuId, suppressSound := false, *)
     {
         if (!this.menus.HasOwnProp(menuId))
@@ -1272,50 +1292,57 @@ Class Radify {
         relX := (mouseX - winX) / oMenu.dpiScale
         relY := (mouseY - winY) / oMenu.dpiScale
         soundPlayed := false
+        itemClicked := false
 
         for (index, itemInfo in oMenu.itemList) {
-            if (this.IsPointInCircularZone(itemInfo, relX, relY)) {
-                if (itemInfo.isCenter) {
-                    if (oMenu.parentMenuId && clickName == 'click')
-                        return this.ToggleSubmenu(this.menus.%oMenu.parentMenuId%, oMenu.id, 0, 0)
+            if (!this.IsPointInCircularZone(itemInfo, relX, relY))
+                continue
 
-                    clickName := 'center' clickName
-                    action := oMenu.options.%clickName%
-                    close := (action = 'close')
+            ; Handle center click
+            if (itemInfo.isCenter) {
+                if (oMenu.parentMenuId && clickName == 'click')
+                    return this.ToggleSubmenu(this.menus.%oMenu.parentMenuId%, oMenu.id, 0, 0)
+
+                action := oMenu.options.%'center' clickName%
+                close := (action = 'close')
+            }
+
+            ; Handle item click
+            else {
+                ring := oMenu.rings[itemInfo.ringIdx]
+                item := ring.items[itemInfo.itemIdx]
+
+                if (clickName == 'click') {
+                    if (GetKeyState('Shift', 'P'))
+                        result := GetActionAndClose(item, 'shiftClick')
+                    else if (GetKeyState('Alt', 'P'))
+                        result := GetActionAndClose(item, 'altClick')
+                    else if (GetKeyState('Ctrl', 'P'))
+                        result := GetActionAndClose(item, 'ctrlClick')
+                    else if (item.submenuId)
+                        return this.ToggleSubmenu(oMenu, item.submenuId, item.absX, item.absY)
+                    else
+                        result := GetActionAndClose(item, 'click')
                 } else {
-                    ring := oMenu.rings[itemInfo.ringIdx]
-                    item := ring.items[itemInfo.itemIdx]
-
-                    if (clickName == 'click') {
-                        switch {
-                            case GetKeyState('Shift', 'P'):
-                                result := GetActionAndClose(item, 'shiftClick')
-                            case GetKeyState('Alt', 'P'):
-                                result := GetActionAndClose(item, 'altClick')
-                            case GetKeyState('Ctrl', 'P'):
-                                result := (item.ctrlClick ? GetActionAndClose(item, 'ctrlClick') : {action: item.click, close: false})
-                            default:
-                                if (item.submenuId)
-                                    return this.ToggleSubmenu(oMenu, item.submenuId, item.absX, item.absY)
-                                result := GetActionAndClose(item, 'click')
-                        }
-                    } else result := GetActionAndClose(item, 'rightClick')
-
-                    action := result.action
-                    close := result.close
-
-                    if (item.soundOnSelect && action)
-                        this.PlaySound(item.soundOnSelect), soundPlayed := true
+                    result := GetActionAndClose(item, 'rightClick')
                 }
 
-                foundItem := true
-                break
+                action := result.action
+                close := result.close
+
+                if (item.soundOnSelect && action) {
+                    this.PlaySound(item.soundOnSelect)
+                    soundPlayed := true
+                }
             }
+
+            itemClicked := true
+            break
         }
 
-        if (!IsSet(foundItem)) {
-            clickName := 'menu' clickName
-            action := oMenu.options.%clickName%
+        ; Handle menu background click
+        if (!itemClicked) {
+            action := oMenu.options.%'menu' clickName%
             close := (Type(action) == 'String' && action = 'close')
         }
 
@@ -1324,7 +1351,8 @@ Class Radify {
             while (this.menus.%rootMenuId%.parentMenuId)
                 rootMenuId := this.menus.%rootMenuId%.parentMenuId
             this.Close(rootMenuId, soundPlayed)
-        } else if (Type(action) == 'String') {
+        }
+        else if (Type(action) == 'String') {
             switch action, false {
                 case 'closeMenu':
                     return this.CloseMenu(oMenu.id, soundPlayed)
@@ -1341,20 +1369,26 @@ Class Radify {
         ;==============================================
 
         GetActionAndClose(item, clickType) {
-            action := item.%clickType%
-            closeDefault := ((clickType = 'rightClick') ? item.closeOnItemRightClick : item.closeOnItemClick)
+            ; Ctrl+Click: if ctrlClick is undefined, fall back to click action without closing menu (overrides closeOnItemClick)
+            if (clickType == 'ctrlClick' && !item.ctrlClick) {
+                action := item.click
+                close := false
+            } else {
+                action := item.%clickType%
+                close := (clickType == 'rightClick' ? item.closeOnItemRightClick : item.closeOnItemClick)
+            }
 
+            ; Handle special string actions
             if (Type(action) == 'String') {
                 switch action, false {
                     case 'close':
                         return {action: action, close: true}
                     case 'closeMenu', 'drag':
                         return {action: action, close: false}
-                    default:
-                        return {action: action, close: closeDefault}
                 }
-            } else
-                return {action: action, close: closeDefault}
+            }
+
+            return {action: action, close: close}
         }
     }
 
@@ -1381,8 +1415,8 @@ Class Radify {
                             Hotstring(item.%key%, item.%actionKey%, 'On')
                     }
                 } catch as e
-                    throw Error(e.Message '`n`nDetails:`n- Menu: "' oMenu.id '"`n- Ring: ' ringIdx ', Item: ' itemIdx
-                        . (e.HasOwnProp('Extra') ? '`n- Extra: ' e.Extra : ''))
+                    throw ValueError(e.Message '`n`nDetails:`n  - ' (oMenu.parentMenuId ? 'Submenu' : 'Menu') ': "' oMenu.id '" (Ring: ' ringIdx ', Item: ' itemIdx ')'
+                            (e.HasOwnProp('Extra') && e.Extra ? '`n  - Specifically: ' e.Extra : ''), -1)
             }
         }
     }
@@ -1403,14 +1437,15 @@ Class Radify {
 
     static DeregisterClickHandlers(oMenu)
     {
-        if (oMenu.HasOwnProp('boundFuncOnClick'))
+        if (oMenu.HasOwnProp('boundFuncOnClick')) {
             OnMessage(0x0201, oMenu.boundFuncOnClick, 0)
-        if (oMenu.HasOwnProp('boundFuncOnClick'))
             OnMessage(0x0203, oMenu.boundFuncOnClick, 0)
-        if (oMenu.HasOwnProp('boundFuncOnRightClick'))
+        }
+
+        if (oMenu.HasOwnProp('boundFuncOnRightClick')) {
             OnMessage(0x0204, oMenu.boundFuncOnRightClick, 0)
-        if (oMenu.HasOwnProp('boundFuncOnRightClick'))
             OnMessage(0x0206, oMenu.boundFuncOnRightClick, 0)
+        }
     }
 
     ;=============================================================================================
@@ -1430,8 +1465,10 @@ Class Radify {
     {
         if (oMenu.HasOwnProp('boundFuncOnMouseMove'))
             OnMessage(0x0200, oMenu.boundFuncOnMouseMove, 0)
+
         if (oMenu.HasOwnProp('boundFuncTimerUpdateEffects'))
             SetTimer(oMenu.boundFuncTimerUpdateEffects, 0)
+
         this.HideEffects(oMenu)
     }
 
@@ -1439,8 +1476,8 @@ Class Radify {
 
     static RefreshTooltipZOrder(oMenu)
     {
-        if (oMenu.currentTooltip && WinExist(oMenu.currentTooltip))
-            WinMoveTop('ahk_id ' oMenu.currentTooltip)
+        if (WinExist(oMenu.currentTooltip))
+            try WinMoveTop('ahk_id ' oMenu.currentTooltip)
     }
 
     ;=============================================================================================
@@ -1557,6 +1594,7 @@ Class Radify {
             if (mouseX >= monLeft && mouseX < monRight && mouseY >= monTop && mouseY < monBottom)
                 return A_Index
         }
+
         return MonitorGetPrimary()
     }
 
@@ -1593,8 +1631,9 @@ Class Radify {
     static HasVal(needle, haystack, caseSensitive := false)
     {
         for index, value in haystack
-            if (caseSensitive && value == needle) || (!caseSensitive && value = needle)
+            if (caseSensitive ? value == needle : value = needle)
                 return index
+
         return false
     }
 
@@ -1603,8 +1642,10 @@ Class Radify {
     static ArrayReverse(arr)
     {
         reversed := []
+
         for i, value in arr
             reversed.InsertAt(1, value)
+
         return reversed
     }
 
@@ -1614,6 +1655,7 @@ Class Radify {
     {
         for value in arr
             str .= value delim
+
         return RTrim(str, delim)
     }
 
@@ -1623,9 +1665,11 @@ Class Radify {
     {
         if (arr.Length = 0)
             return false
+
         for item in arr
             if (Type(item) != 'Array')
                 return false
+
         return true
     }
 
@@ -1640,10 +1684,43 @@ Class Radify {
         return {dhwPrev: dhwPrev, tmmPrev: tmmPrev}
     }
 
+    /********************************************************************************************
+     * @credits teadrinker, XMCQCX (modifications)
+     * @see {@link https://www.autohotkey.com/boards/viewtopic.php?f=76&t=66133&start=20 AHK Forum}
+    ********************************************************************************************/
+    static GetFolderPath(folderName)
+    {
+        static folderGUIDs := {
+            downloads: '{374DE290-123F-4565-9164-39C4925E467B}',
+            music: '{4BD8D571-6D19-48D3-BE97-422220080E43}',
+            videos: '{18989B1D-99B5-455B-841C-AB7C74E4DDFC}',
+            pictures: '{33E28130-4E1E-4676-835A-98395C3BC3BB}',
+            documents: '{FDD39AD0-238F-46AF-ADB4-6C85480369C7}',
+            desktop: '{B4BFCC3A-DB2C-424C-B029-7FE99A87C641}',
+            recent: '{AE50C081-EBD2-438A-8655-8A092E34987A}',
+            startup: '{B97D20BB-F46A-4C97-BA10-5E3608430854}',
+            roamingAppData: '{3EB685DB-65F9-4CF6-A03A-E3EF65729F3D}',
+            localAppData: '{F1B32785-6FBA-4FCF-9D55-7B8E7F157091}',
+        }
+
+        if (!folderGUIDs.HasOwnProp(folderName))
+            throw ValueError(A_ThisFunc '(): Unknown folder name: "' folderName '".', -1)
+
+        FOLDERID := folderGUIDs.%folderName%
+        CLSID := Buffer(16)
+        DllCall('ole32\CLSIDFromString', 'WStr', FOLDERID, 'Ptr', CLSID.Ptr, 'Int')
+        DllCall('shell32\SHGetKnownFolderPath', 'Ptr', CLSID.Ptr, 'UInt', 0, 'Ptr', 0, 'Ptr*', &ppath:=0, 'Int')
+        dir := StrGet(ppath, 'UTF-16')
+        DllCall('ole32\CoTaskMemFree', 'Ptr', ppath)
+        expandedPath := Buffer(262 * 2)
+        DllCall('ExpandEnvironmentStringsW', 'WStr', dir, 'Ptr', expandedPath.Ptr, 'UInt', 262)
+        return StrGet(expandedPath.Ptr, 'UTF-16')
+    }
+
     /*********************************************************************************************
      * @credits Faddix, XMCQCX (minor modifications)
      * @see {@link https://www.autohotkey.com/boards/viewtopic.php?f=83&t=130425 AHK Forum}
-     */
+    ********************************************************************************************/
     static PlayWavConcurrent(fPath)
     {
         static obj := initialize()
