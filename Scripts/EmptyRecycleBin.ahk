@@ -1,4 +1,4 @@
-﻿#Requires AutoHotkey v2.0
+#Requires AutoHotkey v2.0
 #SingleInstance
 #NoTrayIcon
 
@@ -12,7 +12,5 @@ GetRecycleBinCount() {
     return bin.Items().Count
 }
 
-if (GetRecycleBinCount() = 0)
-    ExitApp()
-
-DllCall('shell32.dll\SHEmptyRecycleBin', 'Ptr', 0, 'Ptr', 0, 'UInt', 0)
+if (GetRecycleBinCount() > 0)
+    DllCall('shell32.dll\SHEmptyRecycleBin', 'Ptr', 0, 'Ptr', 0, 'UInt', 0)
